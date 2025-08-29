@@ -701,10 +701,10 @@
                 <div class="setting-group">
                     <label>Model Selection</label>
                     <div class="model-type-toggle">
-                        <button class="active" onclick="toggleModelType('predefined')">Predefined</button>
-                        <button onclick="toggleModelType('custom')">Custom</button>
+                        <button id="predefined-btn" class="active" onclick="toggleModelType('predefined')">Predefined</button>
+                        <button id="custom-btn" onclick="toggleModelType('custom')">Custom</button>
                     </div>
-                    <select id="model-select" style="display: block;">
+                    <select id="model-select">
                         <!-- Models will be populated based on provider -->
                     </select>
                     <input type="text" id="custom-model" placeholder="Enter custom model name" style="display: none;">
@@ -807,6 +807,7 @@
             apiKey: '',
             model: 'gpt-3.5-turbo',
             customModel: '',
+            modelType: 'predefined',
             temperature: 0.7,
             maxTokens: 2048,
             systemPrompt: 'You are a helpful assistant.'
@@ -869,9 +870,11 @@
             const overlay = document.getElementById('overlay');
             
             if (window.innerWidth <= 768) {
+                // Mobile behavior
                 sidebar.classList.toggle('open');
                 overlay.classList.toggle('show');
             } else {
+                // Desktop behavior
                 sidebar.classList.toggle('collapsed');
             }
         }
@@ -889,20 +892,23 @@
         // Model type toggle
         function toggleModelType(type) {
             modelType = type;
-            const buttons = document.querySelectorAll('.model-type-toggle button');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
+            const predefinedBtn = document.getElementById('predefined-btn');
+            const customBtn = document.getElementById('custom-btn');
             const modelSelect = document.getElementById('model-select');
-            const customModel = document.getElementById('custom-model');
+            const customModelInput = document.getElementById('custom-model');
             
+            // Update button states
+            predefinedBtn.classList.toggle('active', type === 'predefined');
+            customBtn.classList.toggle('active', type === 'custom');
+            
+            // Show/hide inputs
             if (type === 'predefined') {
                 modelSelect.style.display = 'block';
-                customModel.style.display = 'none';
+                customModelInput.style.display = 'none';
             } else {
                 modelSelect.style.display = 'none';
-                customModel.style.display = 'block';
-                customModel.value = settings.customModel;
+                customModelInput.style.display = 'block';
+                customModelInput.value = settings.customModel;
             }
         }
 
@@ -928,7 +934,7 @@
                 const option = document.createElement('option');
                 option.value = model;
                 option.textContent = model;
-                if (model === settings.model) {
+                if (model === settings.model && modelType === 'predefined') {
                     option.selected = true;
                 }
                 modelSelect.appendChild(option);
@@ -950,6 +956,7 @@
 
             settings.provider = document.getElementById('api-provider').value;
             settings.apiKey = apiKey;
+            settings.modelType = modelType;
             
             if (modelType === 'predefined') {
                 settings.model = document.getElementById('model-select').value;
@@ -982,6 +989,10 @@
                 document.getElementById('temperature').value = settings.temperature;
                 document.getElementById('max-tokens').value = settings.maxTokens;
                 document.getElementById('system-prompt').value = settings.systemPrompt;
+                
+                // Load model type
+                modelType = settings.modelType || 'predefined';
+                toggleModelType(modelType);
                 
                 // Load custom model if exists
                 if (settings.customModel) {
@@ -1097,7 +1108,8 @@
                 headers['X-Title'] = 'LLM Chat Interface';
             }
 
-            const modelToUse = modelType === 'predefined' ? settings.model : settings.customModel;
+            // Use the correct model based on model type
+            const modelToUse = settings.modelType === 'predefined' ? settings.model : settings.customModel;
 
             const body = {
                 model: modelToUse,
@@ -1136,7 +1148,8 @@
                 headers['X-Title'] = 'LLM Chat Interface';
             }
 
-            const modelToUse = modelType === 'predefined' ? settings.model : settings.customModel;
+            // Use the correct model based on model type
+            const modelToUse = settings.modelType === 'predefined' ? settings.model : settings.customModel;
 
             const body = {
                 model: modelToUse,
