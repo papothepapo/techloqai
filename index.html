@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Chat Interface</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #e0e0e0;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #dddddd;
+            --accent-color: #007bff;
+            --accent-hover: #0056b3;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --warning-color: #ffc107;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #404040;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --border-color: #404040;
+            --shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: var(--transition);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-primary);
+            padding: 5px;
+            border-radius: 5px;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        /* Settings */
+        .settings {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .security-notice {
+            background-color: rgba(255, 193, 7, 0.1);
+            border: 1px solid var(--warning-color);
+            color: #856404;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .security-notice i {
+            margin-right: 8px;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .setting-group input,
+        .setting-group select,
+        .setting-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+
+        .setting-group input:focus,
+        .setting-group select:focus,
+        .setting-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .setting-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .range-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .range-input input[type="range"] {
+            flex: 1;
+        }
+
+        .range-value {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .button.secondary {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .button.secondary:hover {
+            background-color: var(--border-color);
+        }
+
+        /* Main Chat Area */
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-secondary);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .message.assistant .message-avatar {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .message.user .message-avatar {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background-color: var(--bg-secondary);
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .message-image {
+            max-width: 300px;
+            border-radius: 8px;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .message-image:hover {
+            transform: scale(1.02);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .chat-input {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--bg-secondary);
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .chat-input textarea {
+            width: 100%;
+            padding: 12px 45px 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            resize: none;
+            font-family: inherit;
+            font-size: 1rem;
+            line-height: 1.5;
+            max-height: 150px;
+            transition: var(--transition);
+        }
+
+        .chat-input textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .send-button {
+            position: absolute;
+            right: 5px;
+            bottom: 5px;
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 5px;
+            transition: var(--transition);
+        }
+
+        .send-button:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .send-button:disabled {
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .model-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .model-button {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .model-button.active {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .model-button:hover:not(.active) {
+            background-color: var(--bg-tertiary);
+        }
+
+        .status-message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .status-message.error {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+
+        .status-message.success {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .typing-indicator.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -300px;
+                height: 100vh;
+                z-index: 1000;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 1001;
+                background-color: var(--bg-secondary);
+                border: 1px solid var(--border-color);
+                border-radius: 5px;
+                padding: 10px;
+                cursor: pointer;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Mobile menu toggle -->
+        <button class="mobile-menu-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Settings</h2>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+
+            <div class="settings">
+                <div class="security-notice">
+                    <i class="fas fa-shield-alt"></i>
+                    <strong>Your API Key</strong><br>
+                    Your API key is stored locally in your browser and never leaves your device.
+                </div>
+
+                <div id="status-message"></div>
+
+                <div class="setting-group">
+                    <label for="api-provider">API Provider</label>
+                    <select id="api-provider" onchange="updateProviderSettings()">
+                        <option value="openai">OpenAI</option>
+                        <option value="openrouter">OpenRouter</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label for="api-key">Your API Key</label>
+                    <input type="password" id="api-key" placeholder="Enter your API key">
+                    <small style="color: var(--text-secondary); font-size: 0.85rem;">
+                        Get your key from: <span id="provider-link">https://platform.openai.com/api-keys</span>
+                    </small>
+                </div>
+
+                <div class="setting-group">
+                    <label for="model-select">Model</label>
+                    <select id="model-select">
+                        <!-- Models will be populated based on provider -->
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label for="temperature">Temperature: <span class="range-value" id="temp-value">0.7</span></label>
+                    <div class="range-input">
+                        <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7" oninput="updateTempValue()">
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label for="max-tokens">Max Tokens</label>
+                    <input type="number" id="max-tokens" value="2048" min="1" max="8192">
+                </div>
+
+                <div class="setting-group">
+                    <label for="system-prompt">System Prompt</label>
+                    <textarea id="system-prompt" placeholder="Enter system prompt...">You are a helpful assistant.</textarea>
+                </div>
+
+                <button class="button" onclick="saveSettings()">Save Settings</button>
+                <button class="button secondary" onclick="clearChat()" style="margin-top: 10px;">Clear Chat</button>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="main-chat">
+            <div class="chat-header">
+                <h1>LLM Chat Interface</h1>
+            </div>
+
+            <div class="chat-messages" id="chat-messages">
+                <div class="message assistant">
+                    <div class="message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        Welcome! Please enter your API key in the settings to start chatting. Your key stays private in your browser.
+                    </div>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typing-indicator">
+                Assistant is typing...
+            </div>
+
+            <div class="chat-input">
+                <div class="model-selector">
+                    <button class="model-button active" onclick="selectModel('chat')">Chat</button>
+                    <button class="model-button" onclick="selectModel('image')">Image Generation</button>
+                </div>
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="message-input" 
+                            placeholder="Enter your API key first to start chatting..."
+                            rows="1"
+                            onkeypress="handleKeyPress(event)"
+                            oninput="autoResize(this)"></textarea>
+                        <button class="send-button" onclick="sendMessage()" id="send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Global variables
+        let currentModel = 'chat';
+        let settings = {
+            provider: 'openai',
+            apiKey: '',
+            model: 'gpt-3.5-turbo',
+            temperature: 0.7,
+            maxTokens: 2048,
+            systemPrompt: 'You are a helpful assistant.'
+        };
+
+        // Model options
+        const modelOptions = {
+            openai: {
+                chat: ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+                image: ['dall-e-3']
+            },
+            openrouter: {
+                chat: ['openai/gpt-3.5-turbo', 'openai/gpt-4', 'anthropic/claude-2', 'google/palm-2-chat-bison'],
+                image: ['stabilityai/stable-diffusion-xl']
+            }
+        };
+
+        // API endpoints
+        const apiEndpoints = {
+            openai: {
+                chat: 'https://api.openai.com/v1/chat/completions',
+                image: 'https://api.openai.com/v1/images/generations'
+            },
+            openrouter: {
+                chat: 'https://openrouter.ai/api/v1/chat/completions',
+                image: 'https://api.openrouter.ai/v1/images/generations'
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            updateProviderSettings();
+            applyTheme();
+            updateInputPlaceholder();
+        });
+
+        // Theme management
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            const icon = document.querySelector('.theme-toggle i');
+            icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        function applyTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            const icon = document.querySelector('.theme-toggle i');
+            icon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        // Sidebar management
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Settings management
+        function updateProviderSettings() {
+            const provider = document.getElementById('api-provider').value;
+            const modelSelect = document.getElementById('model-select');
+            const providerLink = document.getElementById('provider-link');
+            
+            // Update provider link
+            if (provider === 'openai') {
+                providerLink.textContent = 'https://platform.openai.com/api-keys';
+                providerLink.parentElement.innerHTML = 'Get your key from: <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--accent-color);">https://platform.openai.com/api-keys</a>';
+            } else {
+                providerLink.textContent = 'https://openrouter.ai/keys';
+                providerLink.parentElement.innerHTML = 'Get your key from: <a href="https://openrouter.ai/keys" target="_blank" style="color: var(--accent-color);">https://openrouter.ai/keys</a>';
+            }
+            
+            modelSelect.innerHTML = '';
+            const models = modelOptions[provider][currentModel];
+            
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model;
+                option.textContent = model;
+                if (model === settings.model) {
+                    option.selected = true;
+                }
+                modelSelect.appendChild(option);
+            });
+        }
+
+        function updateTempValue() {
+            const temp = document.getElementById('temperature').value;
+            document.getElementById('temp-value').textContent = temp;
+        }
+
+        function saveSettings() {
+            const apiKey = document.getElementById('api-key').value.trim();
+            
+            if (!apiKey) {
+                showStatus('Please enter an API key', 'error');
+                return;
+            }
+
+            settings.provider = document.getElementById('api-provider').value;
+            settings.apiKey = apiKey;
+            settings.model = document.getElementById('model-select').value;
+            settings.temperature = parseFloat(document.getElementById('temperature').value);
+            settings.maxTokens = parseInt(document.getElementById('max-tokens').value);
+            settings.systemPrompt = document.getElementById('system-prompt').value;
+
+            // Save to localStorage
+            localStorage.setItem('llm-settings', JSON.stringify(settings));
+            
+            showStatus('Settings saved successfully!', 'success');
+            updateInputPlaceholder();
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('llm-settings');
+            if (saved) {
+                settings = JSON.parse(saved);
+                
+                document.getElementById('api-provider').value = settings.provider;
+                document.getElementById('api-key').value = settings.apiKey;
+                document.getElementById('temperature').value = settings.temperature;
+                document.getElementById('max-tokens').value = settings.maxTokens;
+                document.getElementById('system-prompt').value = settings.systemPrompt;
+                
+                updateTempValue();
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status-message');
+            statusDiv.className = `status-message ${type}`;
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateInputPlaceholder() {
+            const input = document.getElementById('message-input');
+            if (settings.apiKey) {
+                input.placeholder = currentModel === 'image' ? 'Describe the image you want to generate...' : 'Type your message here...';
+            } else {
+                input.placeholder = 'Enter your API key first to start chatting...';
+            }
+        }
+
+        // Model selection
+        function selectModel(model) {
+            currentModel = model;
+            document.querySelectorAll('.model-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            updateProviderSettings();
+            updateInputPlaceholder();
+        }
+
+        // Chat functionality
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            if (!settings.apiKey) {
+                showStatus('Please enter your API key in the settings', 'error');
+                return;
+            }
+
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+            autoResize(input);
+            
+            // Show typing indicator
+            document.getElementById('typing-indicator').classList.add('show');
+            
+            try {
+                let response;
+                if (currentModel === 'chat') {
+                    response = await callChatAPI(message);
+                } else {
+                    response = await callImageAPI(message);
+                }
+                
+                document.getElementById('typing-indicator').classList.remove('show');
+                
+                if (response.error) {
+                    addMessage(`Error: ${response.error}`, 'assistant');
+                } else if (currentModel === 'chat') {
+                    addMessage(response.content, 'assistant');
+                } else {
+                    addMessage("I've generated an image based on your description:", 'assistant');
+                    const img = document.createElement('img');
+                    img.src = response.url;
+                    img.className = 'message-image';
+                    img.onclick = () => window.open(response.url, '_blank');
+                    const lastMessage = document.querySelector('.message:last-child .message-content');
+                    lastMessage.appendChild(img);
+                }
+            } catch (error) {
+                document.getElementById('typing-indicator').classList.remove('show');
+                addMessage(`Error: ${error.message}`, 'assistant');
+            }
+        }
+
+        async function callChatAPI(message) {
+            const endpoint = apiEndpoints[settings.provider].chat;
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${settings.apiKey}`
+            };
+
+            if (settings.provider === 'openrouter') {
+                headers['HTTP-Referer'] = window.location.origin;
+                headers['X-Title'] = 'LLM Chat Interface';
+            }
+
+            const body = {
+                model: settings.model,
+                messages: [
+                    { role: 'system', content: settings.systemPrompt },
+                    { role: 'user', content: message }
+                ],
+                temperature: settings.temperature,
+                max_tokens: settings.maxTokens
+            };
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(body)
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                return { error: data.error?.message || 'API request failed' };
+            }
+
+            return { content: data.choices[0].message.content };
+        }
+
+        async function callImageAPI(prompt) {
+            const endpoint = apiEndpoints[settings.provider].image;
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${settings.apiKey}`
+            };
+
+            if (settings.provider === 'openrouter') {
+                headers['HTTP-Referer'] = window.location.origin;
+                headers['X-Title'] = 'LLM Chat Interface';
+            }
+
+            const body = {
+                model: settings.model,
+                prompt: prompt,
+                n: 1,
+                size: '1024x1024'
+            };
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(body)
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                return { error: data.error?.message || 'API request failed' };
+            }
+
+            return { url: data.data[0].url };
+        }
+
+        function addMessage(content, sender) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.innerHTML = sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            
+            if (content.startsWith('Error:')) {
+                messageContent.innerHTML = content;
+                messageContent.style.color = 'var(--error-color)';
+            } else {
+                messageContent.textContent = content;
+            }
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(messageContent);
+            messagesContainer.appendChild(messageDiv);
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function clearChat() {
+            const messagesContainer = document.getElementById('chat-messages');
+            messagesContainer.innerHTML = `
+                <div class="message assistant">
+                    <div class="message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        Chat cleared. How can I help you?
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
