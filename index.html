@@ -821,7 +821,7 @@
             },
             openrouter: {
                 chat: ['openai/gpt-3.5-turbo', 'openai/gpt-4', 'anthropic/claude-2', 'google/palm-2-chat-bison'],
-                image: ['stabilityai/stable-diffusion-xl']
+                image: ['stabilityai/stable-diffusion-xl', 'google/gemini-2.5-flash-image-preview:free']
             }
         };
 
@@ -833,7 +833,7 @@
             },
             openrouter: {
                 chat: 'https://openrouter.ai/api/v1/chat/completions',
-                image: 'https://api.openrouter.ai/v1/images/generations'
+                image: null // OpenRouter uses chat endpoint for image generation
             }
         };
 
@@ -1137,7 +1137,6 @@
         }
 
         async function callImageAPI(prompt) {
-            const endpoint = apiEndpoints[settings.provider].image;
             const headers = {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${settings.apiKey}`
@@ -1151,26 +1150,76 @@
             // Use the correct model based on model type
             const modelToUse = settings.modelType === 'predefined' ? settings.model : settings.customModel;
 
-            const body = {
-                model: modelToUse,
-                prompt: prompt,
-                n: 1,
-                size: '1024x1024'
-            };
+            if (settings.provider === 'openrouter') {
+                // For OpenRouter, use chat completions endpoint with image generation system prompt
+                const endpoint = apiEndpoints.openrouter.chat;
+                
+                const imageSystemPrompt = `You are an image generation AI. Generate an image based on the user's description. 
+                If you generate an image, respond with ONLY a markdown image tag in the format: ![description](url)
+                Do not include any other text or explanation.`;
 
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify(body)
-            });
+                const body = {
+                    model: modelToUse,
+                    messages: [
+                        { role: 'system', content: imageSystemPrompt },
+                        { role: 'user', content: `Generate an image of: ${prompt}` }
+                    ],
+                    temperature: settings.temperature,
+                    max_tokens: settings.maxTokens
+                };
 
-            const data = await response.json();
-            
-            if (!response.ok) {
-                return { error: data.error?.message || 'API request failed' };
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    return { error: data.error?.message || 'API request failed' };
+                }
+
+                const content = data.choices[0].message.content;
+                
+                // Extract image URL from markdown
+                const markdownMatch = content.match(/!$$.*?$$$$(https?:\/\/[^\s)]+)$$/);
+                if (markdownMatch) {
+                    return { url: markdownMatch[1] };
+                }
+                
+                // Try to extract any URL as fallback
+                const urlMatch = content.match(/https?:\/\/[^\s]+/);
+                if (urlMatch) {
+                    return { url: urlMatch[0] };
+                }
+                
+                return { error: 'No image URL found in response' };
+            } else {
+                // For OpenAI, use the image generation endpoint
+                const endpoint = apiEndpoints.openai.image;
+                
+                const body = {
+                    model: modelToUse,
+                    prompt: prompt,
+                    n: 1,
+                    size: '1024x1024'
+                };
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    return { error: data.error?.message || 'API request failed' };
+                }
+
+                return { url: data.data[0].url };
             }
-
-            return { url: data.data[0].url };
         }
 
         function addMessage(content, sender) {
