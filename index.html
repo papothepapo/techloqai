@@ -358,6 +358,7 @@
             justify-content: space-between;
             align-items: center;
             z-index: 100;
+            width: 100%;
         }
 
         .header-left {
@@ -425,6 +426,7 @@
             border-bottom: 1px solid var(--border-color);
             padding: 0 24px;
             gap: 8px;
+            width: 100%;
         }
 
         .mode-tab {
@@ -1499,7 +1501,9 @@
                 let response;
                 if (currentMode === 'chat') {
                     if (settings.stream && (settings.provider === 'openai' || settings.provider === 'openrouter' || settings.provider === 'mistral')) {
-                        response = await callChatAPIStreaming(message);
+                        // For streaming, the function will handle adding to history
+                        await callChatAPIStreaming(message);
+                        response = null; // Response is already handled in streaming function
                     } else {
                         response = await callChatAPI(message);
                     }
@@ -1509,18 +1513,21 @@
                 
                 document.getElementById('typing-indicator').classList.remove('show');
                 
-                if (response.error) {
-                    const errorMessage = {
-                        id: Date.now(),
-                        role: 'assistant',
-                        content: `Error: ${response.error}`,
-                        mode: currentMode
-                    };
-                    addMessageToUI(errorMessage);
-                    messageHistory.push(errorMessage);
-                } else {
-                    messageHistory.push(response);
-                    addMessageToUI(response);
+                // Add non-streaming response to history and UI
+                if (response) {
+                    if (response.error) {
+                        const errorMessage = {
+                            id: Date.now(),
+                            role: 'assistant',
+                            content: `Error: ${response.error}`,
+                            mode: currentMode
+                        };
+                        addMessageToUI(errorMessage);
+                        messageHistory.push(errorMessage);
+                    } else {
+                        messageHistory.push(response);
+                        addMessageToUI(response);
+                    }
                 }
                 
                 saveMessageHistory();
@@ -1706,6 +1713,7 @@
             // Update the message in history
             tempMessage.content = content;
             messageHistory.push(tempMessage);
+            saveMessageHistory();
 
             return tempMessage;
         }
