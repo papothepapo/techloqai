@@ -70,7 +70,6 @@
 
         .app-container.sidebar-collapsed .main-content {
             margin-left: 0;
-            justify-content: center;
         }
 
         .app-container:not(.sidebar-collapsed) .main-content {
@@ -339,6 +338,36 @@
             margin-top: 16px;
         }
 
+        /* File Input */
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.95rem;
+            text-align: center;
+        }
+
+        .file-input-label:hover {
+            background-color: var(--bg-hover);
+        }
+
         /* Main Content */
         .main-content {
             flex: 1;
@@ -359,6 +388,7 @@
             align-items: center;
             z-index: 100;
             width: 100%;
+            flex-shrink: 0;
         }
 
         .header-left {
@@ -427,6 +457,7 @@
             padding: 0 24px;
             gap: 8px;
             width: 100%;
+            flex-shrink: 0;
         }
 
         .mode-tab {
@@ -702,6 +733,7 @@
             max-width: 1200px;
             margin: 0 auto;
             width: 100%;
+            flex-shrink: 0;
         }
 
         .input-wrapper {
@@ -983,7 +1015,17 @@
                         <option value="openrouter">OpenRouter</option>
                         <option value="google">Google AI Studio</option>
                         <option value="mistral">Mistral AI</option>
+                        <option value="freepik">FreePIK</option>
+                        <option value="custom">Custom</option>
                     </select>
+                </div>
+
+                <div class="setting-group" id="custom-endpoints-group" style="display: none;">
+                    <label class="setting-label">Custom Chat Endpoint</label>
+                    <input type="url" class="setting-input" id="custom-chat-endpoint" placeholder="https://your-api.com/chat/completions">
+                    
+                    <label class="setting-label" style="margin-top: 16px;">Custom Image Endpoint</label>
+                    <input type="url" class="setting-input" id="custom-image-endpoint" placeholder="https://your-api.com/images/generations">
                 </div>
 
                 <div class="setting-group">
@@ -1022,6 +1064,14 @@
                 <div class="setting-group">
                     <label class="setting-label">System Prompt</label>
                     <textarea class="setting-textarea" id="system-prompt" placeholder="Enter system prompt...">You are a helpful assistant.</textarea>
+                    
+                    <div class="file-input-wrapper" style="margin-top: 12px;">
+                        <label for="prompt-file" class="file-input-label">
+                            <i class="fas fa-upload" style="margin-right: 8px;"></i>
+                            Load System Prompt from File
+                        </label>
+                        <input type="file" id="prompt-file" accept=".txt,.md" onchange="loadPromptFromFile(event)">
+                    </div>
                 </div>
 
                 <div class="setting-group">
@@ -1169,7 +1219,9 @@
             imageSize: '1024x1024',
             imageQuality: 'standard',
             imageStyle: 'vivid',
-            imageCount: 1
+            imageCount: 1,
+            customChatEndpoint: '',
+            customImageEndpoint: ''
         };
 
         let messageHistory = [];
@@ -1239,6 +1291,24 @@
                     image: 'https://api.mistral.ai/v1/images/generations'
                 },
                 keyUrl: 'https://console.mistral.ai/api-keys'
+            },
+            freepik: {
+                chat: [],
+                image: ['freepik-diffusion'],
+                endpoints: {
+                    chat: '',
+                    image: 'https://api.freepik.com/v1/images'
+                },
+                keyUrl: 'https://developer.freepik.com/'
+            },
+            custom: {
+                chat: ['custom-model'],
+                image: ['custom-image-model'],
+                endpoints: {
+                    chat: '',
+                    image: ''
+                },
+                keyUrl: '#'
             }
         };
 
@@ -1300,6 +1370,14 @@
             const provider = document.getElementById('api-provider').value;
             const modelSelect = document.getElementById('model-select');
             const providerLink = document.getElementById('provider-link');
+            const customEndpointsGroup = document.getElementById('custom-endpoints-group');
+            
+            // Show/hide custom endpoints
+            if (provider === 'custom') {
+                customEndpointsGroup.style.display = 'block';
+            } else {
+                customEndpointsGroup.style.display = 'none';
+            }
             
             // Update provider link
             providerLink.href = modelConfigs[provider].keyUrl;
@@ -1350,6 +1428,19 @@
             document.getElementById('temp-value').textContent = temp;
         }
 
+        function loadPromptFromFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    document.getElementById('system-prompt').value = content;
+                    showStatus('System prompt loaded from file', 'success');
+                };
+                reader.readAsText(file);
+            }
+        }
+
         function saveSettings() {
             const apiKey = document.getElementById('api-key').value.trim();
             
@@ -1363,6 +1454,21 @@
             settings.temperature = parseFloat(document.getElementById('temperature').value);
             settings.maxTokens = parseInt(document.getElementById('max-tokens').value);
             settings.systemPrompt = document.getElementById('system-prompt').value;
+            
+            // Save custom endpoints if custom provider
+            if (settings.provider === 'custom') {
+                settings.customChatEndpoint = document.getElementById('custom-chat-endpoint').value.trim();
+                settings.customImageEndpoint = document.getElementById('custom-image-endpoint').value.trim();
+                
+                if (!settings.customChatEndpoint && currentMode === 'chat') {
+                    showStatus('Please enter a custom chat endpoint', 'error');
+                    return;
+                }
+                if (!settings.customImageEndpoint && currentMode === 'image') {
+                    showStatus('Please enter a custom image endpoint', 'error');
+                    return;
+                }
+            }
             
             if (settings.modelType === 'predefined') {
                 settings.model = document.getElementById('model-select').value;
@@ -1398,6 +1504,14 @@
                 document.getElementById('temperature').value = settings.temperature;
                 document.getElementById('max-tokens').value = settings.maxTokens;
                 document.getElementById('system-prompt').value = settings.systemPrompt;
+                
+                // Apply custom endpoints
+                if (settings.customChatEndpoint) {
+                    document.getElementById('custom-chat-endpoint').value = settings.customChatEndpoint;
+                }
+                if (settings.customImageEndpoint) {
+                    document.getElementById('custom-image-endpoint').value = settings.customImageEndpoint;
+                }
                 
                 // Apply model type
                 if (settings.modelType === 'custom') {
@@ -1500,7 +1614,7 @@
             try {
                 let response;
                 if (currentMode === 'chat') {
-                    if (settings.stream && (settings.provider === 'openai' || settings.provider === 'openrouter' || settings.provider === 'mistral')) {
+                    if (settings.stream && (settings.provider === 'openai' || settings.provider === 'openrouter' || settings.provider === 'mistral' || settings.provider === 'custom')) {
                         // For streaming, the function will handle adding to history
                         await callChatAPIStreaming(message);
                         response = null; // Response is already handled in streaming function
@@ -1571,6 +1685,20 @@
                         temperature: settings.temperature,
                         maxOutputTokens: settings.maxTokens
                     }
+                };
+            } else if (provider === 'custom') {
+                // Custom API format
+                endpoint = settings.customChatEndpoint;
+                headers['Authorization'] = `Bearer ${settings.apiKey}`;
+                
+                body = {
+                    model: model,
+                    messages: [
+                        { role: 'system', content: settings.systemPrompt },
+                        { role: 'user', content: message }
+                    ],
+                    temperature: settings.temperature,
+                    max_tokens: settings.maxTokens
                 };
             } else {
                 // OpenAI-compatible format
@@ -1650,7 +1778,12 @@
                 stream: true
             };
 
-            const endpoint = modelConfigs[provider].endpoints.chat;
+            let endpoint;
+            if (provider === 'custom') {
+                endpoint = settings.customChatEndpoint;
+            } else {
+                endpoint = modelConfigs[provider].endpoints.chat;
+            }
             
             // Create a temporary message for streaming
             const tempMessageId = Date.now();
@@ -1733,7 +1866,83 @@
             const provider = settings.provider;
             const model = settings.modelType === 'predefined' ? settings.model : settings.customModel;
             
-            if (provider === 'google' && model.includes('imagen')) {
+            if (provider === 'freepik') {
+                // FreePIK API
+                const endpoint = modelConfigs[provider].endpoints.image;
+                
+                const body = {
+                    prompt: prompt,
+                    model: model,
+                    width: parseInt(settings.imageSize.split('x')[0]),
+                    height: parseInt(settings.imageSize.split('x')[1]),
+                    seed: Math.floor(Math.random() * 1000000),
+                    negative_prompt: '',
+                    cfg_scale: 7,
+                    steps: 20
+                };
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${settings.apiKey}`,
+                        'x-freepik-api-key': settings.apiKey
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    return { error: data.error?.message || 'Image generation failed' };
+                }
+
+                return {
+                    id: Date.now(),
+                    role: 'assistant',
+                    content: `I've generated an image based on your description: "${prompt}"`,
+                    mode: 'image',
+                    images: [data.data.url]
+                };
+            } else if (provider === 'custom') {
+                // Custom image API
+                const endpoint = settings.customImageEndpoint;
+                
+                const body = {
+                    model: model,
+                    prompt: prompt,
+                    n: settings.imageCount,
+                    size: settings.imageSize,
+                    quality: settings.imageQuality,
+                    style: settings.imageStyle
+                };
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${settings.apiKey}`
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    return { error: data.error?.message || 'Image generation failed' };
+                }
+
+                // Assuming the custom API returns data in a similar format to OpenAI
+                const images = data.data ? data.data.map(img => img.url) : [data.url];
+                
+                return {
+                    id: Date.now(),
+                    role: 'assistant',
+                    content: `I've generated ${images.length} image(s) based on your description: "${prompt}"`,
+                    mode: 'image',
+                    images: images
+                };
+            } else if (provider === 'google' && model.includes('imagen')) {
                 // Google Imagen API
                 const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateImage?key=${settings.apiKey}`;
                 
