@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Studio - Chat & Image Generation</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
             --bg-primary: #ffffff;
@@ -70,6 +71,10 @@
         .app-container.sidebar-collapsed .main-content {
             margin-left: 0;
             justify-content: center;
+        }
+
+        .app-container:not(.sidebar-collapsed) .main-content {
+            margin-left: var(--sidebar-width);
         }
 
         /* Sidebar */
@@ -341,7 +346,6 @@
             flex-direction: column;
             position: relative;
             overflow: hidden;
-            margin-left: var(--sidebar-width);
             transition: margin-left 0.3s ease;
         }
 
@@ -529,6 +533,68 @@
         .message.user .message-content {
             background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
             color: white;
+        }
+
+        /* Markdown formatting */
+        .message-content h1, .message-content h2, .message-content h3, 
+        .message-content h4, .message-content h5, .message-content h6 {
+            margin: 16px 0 8px 0;
+            font-weight: 600;
+        }
+
+        .message-content h1 { font-size: 1.5em; }
+        .message-content h2 { font-size: 1.3em; }
+        .message-content h3 { font-size: 1.2em; }
+
+        .message-content p {
+            margin: 8px 0;
+        }
+
+        .message-content ul, .message-content ol {
+            margin: 8px 0;
+            padding-left: 24px;
+        }
+
+        .message-content li {
+            margin: 4px 0;
+        }
+
+        .message-content strong {
+            font-weight: 600;
+        }
+
+        .message-content em {
+            font-style: italic;
+        }
+
+        .message-content blockquote {
+            margin: 8px 0;
+            padding-left: 16px;
+            border-left: 4px solid var(--accent-primary);
+            color: var(--text-secondary);
+        }
+
+        .message-content code {
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+        }
+
+        .message-content pre {
+            margin: 12px 0;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .message-content pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
         }
 
         .message-actions {
@@ -820,11 +886,7 @@
             }
 
             .main-content {
-                margin-left: 0;
-            }
-
-            .app-container.sidebar-collapsed .main-content {
-                margin-left: 0;
+                margin-left: 0 !important;
             }
 
             .message-wrapper {
@@ -886,25 +948,6 @@
 
         @keyframes spin {
             to { transform: rotate(360deg); }
-        }
-
-        /* Code Block Styling */
-        .code-block {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 16px;
-            margin: 8px 0;
-            overflow-x: auto;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-
-        .code-block pre {
-            margin: 0;
-            white-space: pre-wrap;
-            word-break: break-word;
         }
     </style>
 </head>
@@ -983,7 +1026,7 @@
                     <label class="setting-label">Stream Responses</label>
                     <div class="toggle-group">
                         <span>Off</span>
-                        <div class="toggle-switch" id="stream-toggle" onclick="toggleStream()"></div>
+                        <div class="toggle-switch active" id="stream-toggle" onclick="toggleStream()"></div>
                         <span>On</span>
                     </div>
                 </div>
@@ -1120,7 +1163,7 @@
             temperature: 0.7,
             maxTokens: 2048,
             systemPrompt: 'You are a helpful assistant.',
-            stream: false,
+            stream: true,
             imageSize: '1024x1024',
             imageQuality: 'standard',
             imageStyle: 'vivid',
@@ -1612,7 +1655,6 @@
             };
             
             addMessageToUI(tempMessage);
-            messageHistory.push(tempMessage);
             
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -1662,17 +1704,10 @@
             }
 
             // Update the message in history
-            const messageIndex = messageHistory.findIndex(m => m.id === tempMessageId);
-            if (messageIndex !== -1) {
-                messageHistory[messageIndex].content = content;
-            }
+            tempMessage.content = content;
+            messageHistory.push(tempMessage);
 
-            return {
-                id: tempMessageId,
-                role: 'assistant',
-                content: content,
-                mode: 'chat'
-            };
+            return tempMessage;
         }
 
         function updateMessageContent(messageId, content) {
@@ -1680,7 +1715,8 @@
             if (messageDiv) {
                 const contentDiv = messageDiv.querySelector('.message-content');
                 if (contentDiv) {
-                    contentDiv.textContent = content;
+                    // Parse markdown and update content
+                    contentDiv.innerHTML = marked.parse(content);
                 }
             }
         }
@@ -1794,7 +1830,12 @@
                 errorDiv.textContent = message.content;
                 content.appendChild(errorDiv);
             } else {
-                content.textContent = message.content;
+                // Parse markdown for assistant messages
+                if (message.role === 'assistant' && message.mode === 'chat') {
+                    content.innerHTML = marked.parse(message.content);
+                } else {
+                    content.textContent = message.content;
+                }
             }
             
             // Add images if present
@@ -1914,7 +1955,11 @@
                 
                 // Update UI
                 const contentDiv = messageDiv.querySelector('.message-content');
-                contentDiv.textContent = newContent;
+                if (message.role === 'assistant' && message.mode === 'chat') {
+                    contentDiv.innerHTML = marked.parse(newContent);
+                } else {
+                    contentDiv.textContent = newContent;
+                }
             }
             
             cancelMessageEdit(messageId);
