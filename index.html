@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Studio - Chat & Image Generation</title>
+    <title>AI Studio - Chat</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
@@ -461,53 +461,6 @@
             position: relative;
             overflow: hidden;
             transition: margin-left 0.3s ease;
-            margin-top: 81px;
-        }
-
-        /* Mode Tabs */
-        .mode-tabs {
-            display: flex;
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border-color);
-            padding: 0 24px;
-            gap: 8px;
-            width: 100%;
-            flex-shrink: 0;
-            position: sticky;
-            top: 81px;
-            z-index: 50;
-        }
-
-        .mode-tab {
-            padding: 12px 24px;
-            border: none;
-            background: none;
-            color: var(--text-secondary);
-            border-radius: 10px 10px 0 0;
-            cursor: pointer;
-            transition: var(--transition);
-            font-weight: 500;
-            position: relative;
-        }
-
-        .mode-tab:hover {
-            color: var(--text-primary);
-            background: var(--bg-hover);
-        }
-
-        .mode-tab.active {
-            color: var(--accent-primary);
-            background: var(--bg-primary);
-        }
-
-        .mode-tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--accent-primary);
         }
 
         /* Chat Messages */
@@ -716,33 +669,6 @@
             margin-top: 8px;
         }
 
-        /* Image Generation Options */
-        .image-options {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            display: none;
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .image-options.active {
-            display: block;
-        }
-
-        .option-row {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        .option-group {
-            flex: 1;
-        }
-
         /* Input Area */
         .input-area {
             padding: 24px;
@@ -944,10 +870,6 @@
                 max-width: 85%;
             }
 
-            .option-row {
-                flex-direction: column;
-            }
-
             .status-message {
                 left: 20px;
                 right: 20px;
@@ -955,31 +877,9 @@
             }
 
             .messages-container,
-            .image-options,
             .input-area {
                 max-width: none;
             }
-        }
-
-        /* Image Display */
-        .generated-image {
-            max-width: 100%;
-            border-radius: 12px;
-            margin-top: 12px;
-            cursor: pointer;
-            transition: var(--transition);
-            box-shadow: var(--shadow-md);
-        }
-
-        .generated-image:hover {
-            transform: scale(1.02);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .image-info {
-            margin-top: 8px;
-            font-size: 0.875rem;
-            color: var(--text-muted);
         }
 
         /* Loading Spinner */
@@ -1043,7 +943,6 @@
                         <option value="openrouter">OpenRouter</option>
                         <option value="google">Google AI Studio</option>
                         <option value="mistral">Mistral AI</option>
-                        <option value="freepik">FreePIK</option>
                         <option value="custom">Custom</option>
                     </select>
                 </div>
@@ -1051,9 +950,6 @@
                 <div class="setting-group" id="custom-endpoints-group" style="display: none;">
                     <label class="setting-label">Custom Chat Endpoint</label>
                     <input type="url" class="setting-input" id="custom-chat-endpoint" placeholder="https://your-api.com/chat/completions">
-                    
-                    <label class="setting-label" style="margin-top: 16px;">Custom Image Endpoint</label>
-                    <input type="url" class="setting-input" id="custom-image-endpoint" placeholder="https://your-api.com/images/generations">
                 </div>
 
                 <div class="setting-group">
@@ -1126,58 +1022,6 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <div class="mode-tabs">
-                <button class="mode-tab active" onclick="switchMode('chat')">
-                    <i class="fas fa-comments" style="margin-right: 8px;"></i>
-                    Chat
-                </button>
-                <button class="mode-tab" onclick="switchMode('image')">
-                    <i class="fas fa-image" style="margin-right: 8px;"></i>
-                    Image Generation
-                </button>
-            </div>
-
-            <!-- Image Generation Options -->
-            <div class="image-options" id="image-options">
-                <div class="option-row">
-                    <div class="option-group">
-                        <label class="setting-label">Image Size</label>
-                        <select class="setting-select" id="image-size">
-                            <option value="256x256">256x256</option>
-                            <option value="512x512">512x512</option>
-                            <option value="1024x1024" selected>1024x1024</option>
-                            <option value="1024x1792">1024x1792 (Portrait)</option>
-                            <option value="1792x1024">1792x1024 (Landscape)</option>
-                        </select>
-                    </div>
-                    <div class="option-group">
-                        <label class="setting-label">Quality</label>
-                        <select class="setting-select" id="image-quality">
-                            <option value="standard">Standard</option>
-                            <option value="hd">HD</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="option-row">
-                    <div class="option-group">
-                        <label class="setting-label">Style</label>
-                        <select class="setting-select" id="image-style">
-                            <option value="vivid">Vivid</option>
-                            <option value="natural">Natural</option>
-                        </select>
-                    </div>
-                    <div class="option-group">
-                        <label class="setting-label">Number of Images</label>
-                        <select class="setting-select" id="image-count">
-                            <option value="1" selected>1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
             <div class="messages-container" id="messages-container">
                 <div class="message assistant">
                     <div class="message-avatar">
@@ -1219,7 +1063,6 @@
 
     <script>
         // Global state
-        let currentMode = 'chat';
         let settings = {
             provider: 'openai',
             apiKey: '',
@@ -1230,12 +1073,7 @@
             maxTokens: 2048,
             systemPrompt: 'You are a helpful assistant.',
             stream: true,
-            imageSize: '1024x1024',
-            imageQuality: 'standard',
-            imageStyle: 'vivid',
-            imageCount: 1,
-            customChatEndpoint: '',
-            customImageEndpoint: ''
+            customChatEndpoint: ''
         };
 
         let messageHistory = [];
@@ -1245,10 +1083,8 @@
         const modelConfigs = {
             openai: {
                 chat: ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'],
-                image: ['dall-e-3'],
                 endpoints: {
-                    chat: 'https://api.openai.com/v1/chat/completions',
-                    image: 'https://api.openai.com/v1/images/generations'
+                    chat: 'https://api.openai.com/v1/chat/completions'
                 },
                 keyUrl: 'https://platform.openai.com/api-keys'
             },
@@ -1262,14 +1098,8 @@
                     'meta-llama/llama-2-70b-chat',
                     'mistralai/mistral-7b-instruct'
                 ],
-                image: [
-                    'stabilityai/stable-diffusion-xl',
-                    'stabilityai/stable-diffusion-2-1',
-                    'playgroundai/playground-v2.5-1024px-aesthetic'
-                ],
                 endpoints: {
-                    chat: 'https://openrouter.ai/api/v1/chat/completions',
-                    image: 'https://openrouter.ai/api/v1/chat/completions'
+                    chat: 'https://openrouter.ai/api/v1/chat/completions'
                 },
                 keyUrl: 'https://openrouter.ai/keys'
             },
@@ -1279,12 +1109,8 @@
                     'gemini-1.5-pro-latest',
                     'gemini-1.5-flash-latest'
                 ],
-                image: [
-                    'imagen-3'
-                ],
                 endpoints: {
-                    chat: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
-                    image: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateImage'
+                    chat: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
                 },
                 keyUrl: 'https://makersuite.google.com/app/apikey'
             },
@@ -1297,30 +1123,15 @@
                     'codestral-latest',
                     'mixtral-8x7b-32768'
                 ],
-                image: [
-                    'pixtral-12b'
-                ],
                 endpoints: {
-                    chat: 'https://api.mistral.ai/v1/chat/completions',
-                    image: 'https://api.mistral.ai/v1/images/generations'
+                    chat: 'https://api.mistral.ai/v1/chat/completions'
                 },
                 keyUrl: 'https://console.mistral.ai/api-keys'
             },
-            freepik: {
-                chat: [],
-                image: ['freepik-diffusion'],
-                endpoints: {
-                    chat: '',
-                    image: 'https://api.freepik.com/v1/images'
-                },
-                keyUrl: 'https://developer.freepik.com/'
-            },
             custom: {
                 chat: ['custom-model'],
-                image: ['custom-image-model'],
                 endpoints: {
-                    chat: '',
-                    image: ''
+                    chat: ''
                 },
                 keyUrl: '#'
             }
@@ -1399,7 +1210,7 @@
             
             // Update model options
             modelSelect.innerHTML = '';
-            const models = modelConfigs[provider][currentMode];
+            const models = modelConfigs[provider].chat;
             
             models.forEach(model => {
                 const option = document.createElement('option');
@@ -1472,14 +1283,9 @@
             // Save custom endpoints if custom provider
             if (settings.provider === 'custom') {
                 settings.customChatEndpoint = document.getElementById('custom-chat-endpoint').value.trim();
-                settings.customImageEndpoint = document.getElementById('custom-image-endpoint').value.trim();
                 
-                if (!settings.customChatEndpoint && currentMode === 'chat') {
+                if (!settings.customChatEndpoint) {
                     showStatus('Please enter a custom chat endpoint', 'error');
-                    return;
-                }
-                if (!settings.customImageEndpoint && currentMode === 'image') {
-                    showStatus('Please enter a custom image endpoint', 'error');
                     return;
                 }
             }
@@ -1493,12 +1299,6 @@
                     return;
                 }
             }
-
-            // Save image settings
-            settings.imageSize = document.getElementById('image-size').value;
-            settings.imageQuality = document.getElementById('image-quality').value;
-            settings.imageStyle = document.getElementById('image-style').value;
-            settings.imageCount = parseInt(document.getElementById('image-count').value);
 
             // Save to localStorage
             localStorage.setItem('ai-studio-settings', JSON.stringify(settings));
@@ -1523,9 +1323,6 @@
                 if (settings.customChatEndpoint) {
                     document.getElementById('custom-chat-endpoint').value = settings.customChatEndpoint;
                 }
-                if (settings.customImageEndpoint) {
-                    document.getElementById('custom-image-endpoint').value = settings.customImageEndpoint;
-                }
                 
                 // Apply model type
                 if (settings.modelType === 'custom') {
@@ -1540,48 +1337,7 @@
                     document.getElementById('stream-toggle').classList.add('active');
                 }
                 
-                // Apply image settings
-                document.getElementById('image-size').value = settings.imageSize;
-                document.getElementById('image-quality').value = settings.imageQuality;
-                document.getElementById('image-style').value = settings.imageStyle;
-                document.getElementById('image-count').value = settings.imageCount;
-                
                 updateTempValue();
-            }
-        }
-
-        // Mode switching
-        function switchMode(mode) {
-            currentMode = mode;
-            
-            // Update tabs
-            document.querySelectorAll('.mode-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Show/hide image options
-            const imageOptions = document.getElementById('image-options');
-            if (mode === 'image') {
-                imageOptions.classList.add('active');
-            } else {
-                imageOptions.classList.remove('active');
-            }
-            
-            updateProviderSettings();
-            updateInputPlaceholder();
-        }
-
-        function updateInputPlaceholder() {
-            const input = document.getElementById('message-input');
-            if (settings.apiKey) {
-                if (currentMode === 'chat') {
-                    input.placeholder = 'Type your message here...';
-                } else {
-                    input.placeholder = 'Describe the image you want to generate...';
-                }
-            } else {
-                input.placeholder = 'Configure your API settings to begin...';
             }
         }
 
@@ -1614,7 +1370,7 @@
                 id: Date.now(),
                 role: 'user',
                 content: message,
-                mode: currentMode
+                mode: 'chat'
             };
             
             addMessageToUI(userMessage);
@@ -1627,16 +1383,12 @@
             
             try {
                 let response;
-                if (currentMode === 'chat') {
-                    if (settings.stream && (settings.provider === 'openai' || settings.provider === 'openrouter' || settings.provider === 'mistral' || settings.provider === 'custom')) {
-                        // For streaming, the function will handle adding to history
-                        await callChatAPIStreaming(message);
-                        response = null; // Response is already handled in streaming function
-                    } else {
-                        response = await callChatAPI(message);
-                    }
+                if (settings.stream && (settings.provider === 'openai' || settings.provider === 'openrouter' || settings.provider === 'mistral' || settings.provider === 'custom')) {
+                    // For streaming, the function will handle adding to history
+                    await callChatAPIStreaming();
+                    response = null; // Response is already handled in streaming function
                 } else {
-                    response = await callImageAPI(message);
+                    response = await callChatAPI();
                 }
                 
                 document.getElementById('typing-indicator').classList.remove('show');
@@ -1648,7 +1400,7 @@
                             id: Date.now(),
                             role: 'assistant',
                             content: `Error: ${response.error}`,
-                            mode: currentMode
+                            mode: 'chat'
                         };
                         addMessageToUI(errorMessage);
                         messageHistory.push(errorMessage);
@@ -1665,7 +1417,7 @@
                     id: Date.now(),
                     role: 'assistant',
                     content: `Error: ${error.message}`,
-                    mode: currentMode
+                    mode: 'chat'
                 };
                 addMessageToUI(errorMessage);
                 messageHistory.push(errorMessage);
@@ -1673,7 +1425,7 @@
             }
         }
 
-        async function callChatAPI(message) {
+        async function callChatAPI() {
             const provider = settings.provider;
             const config = modelConfigs[provider];
             const model = settings.modelType === 'predefined' ? settings.model : settings.customModel;
@@ -1689,10 +1441,20 @@
                 endpoint = config.endpoints.chat.replace('{model}', model);
                 headers['x-goog-api-key'] = settings.apiKey;
                 
+                // Build conversation history for Google
+                let conversationHistory = '';
+                messageHistory.forEach(msg => {
+                    if (msg.role === 'user') {
+                        conversationHistory += `User: ${msg.content}\n\n`;
+                    } else if (msg.role === 'assistant') {
+                        conversationHistory += `Assistant: ${msg.content}\n\n`;
+                    }
+                });
+                
                 body = {
                     contents: [{
                         parts: [{
-                            text: settings.systemPrompt + '\n\n' + message
+                            text: settings.systemPrompt + '\n\n' + conversationHistory + 'User: ' + messageHistory[messageHistory.length - 1].content
                         }]
                     }],
                     generationConfig: {
@@ -1705,12 +1467,21 @@
                 endpoint = settings.customChatEndpoint;
                 headers['Authorization'] = `Bearer ${settings.apiKey}`;
                 
+                // Build messages array with full conversation history
+                const messages = [
+                    { role: 'system', content: settings.systemPrompt }
+                ];
+                
+                messageHistory.forEach(msg => {
+                    messages.push({
+                        role: msg.role,
+                        content: msg.content
+                    });
+                });
+                
                 body = {
                     model: model,
-                    messages: [
-                        { role: 'system', content: settings.systemPrompt },
-                        { role: 'user', content: message }
-                    ],
+                    messages: messages,
                     temperature: settings.temperature,
                     max_tokens: settings.maxTokens
                 };
@@ -1724,12 +1495,21 @@
                     headers['X-Title'] = 'AI Studio';
                 }
                 
+                // Build messages array with full conversation history
+                const messages = [
+                    { role: 'system', content: settings.systemPrompt }
+                ];
+                
+                messageHistory.forEach(msg => {
+                    messages.push({
+                        role: msg.role,
+                        content: msg.content
+                    });
+                });
+                
                 body = {
                     model: model,
-                    messages: [
-                        { role: 'system', content: settings.systemPrompt },
-                        { role: 'user', content: message }
-                    ],
+                    messages: messages,
                     temperature: settings.temperature,
                     max_tokens: settings.maxTokens
                 };
@@ -1767,7 +1547,7 @@
             };
         }
 
-        async function callChatAPIStreaming(message) {
+        async function callChatAPIStreaming() {
             const provider = settings.provider;
             const model = settings.modelType === 'predefined' ? settings.model : settings.customModel;
             
@@ -1781,12 +1561,21 @@
                 headers['X-Title'] = 'AI Studio';
             }
 
+            // Build messages array with full conversation history for streaming
+            const messages = [
+                { role: 'system', content: settings.systemPrompt }
+            ];
+            
+            messageHistory.forEach(msg => {
+                messages.push({
+                    role: msg.role,
+                    content: msg.content
+                });
+            });
+
             const body = {
                 model: model,
-                messages: [
-                    { role: 'system', content: settings.systemPrompt },
-                    { role: 'user', content: message }
-                ],
+                messages: messages,
                 temperature: settings.temperature,
                 max_tokens: settings.maxTokens,
                 stream: true
@@ -1876,169 +1665,6 @@
             }
         }
 
-        async function callImageAPI(prompt) {
-            const provider = settings.provider;
-            const model = settings.modelType === 'predefined' ? settings.model : settings.customModel;
-            
-            if (provider === 'freepik') {
-                // FreePIK API
-                const endpoint = modelConfigs[provider].endpoints.image;
-                
-                const body = {
-                    prompt: prompt,
-                    model: model,
-                    width: parseInt(settings.imageSize.split('x')[0]),
-                    height: parseInt(settings.imageSize.split('x')[1]),
-                    seed: Math.floor(Math.random() * 1000000),
-                    negative_prompt: '',
-                    cfg_scale: 7,
-                    steps: 20
-                };
-
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${settings.apiKey}`,
-                        'x-freepik-api-key': settings.apiKey
-                    },
-                    body: JSON.stringify(body)
-                });
-
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    return { error: data.error?.message || 'Image generation failed' };
-                }
-
-                return {
-                    id: Date.now(),
-                    role: 'assistant',
-                    content: `I've generated an image based on your description: "${prompt}"`,
-                    mode: 'image',
-                    images: [data.data.url]
-                };
-            } else if (provider === 'custom') {
-                // Custom image API
-                const endpoint = settings.customImageEndpoint;
-                
-                const body = {
-                    model: model,
-                    prompt: prompt,
-                    n: settings.imageCount,
-                    size: settings.imageSize,
-                    quality: settings.imageQuality,
-                    style: settings.imageStyle
-                };
-
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${settings.apiKey}`
-                    },
-                    body: JSON.stringify(body)
-                });
-
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    return { error: data.error?.message || 'Image generation failed' };
-                }
-
-                // Assuming the custom API returns data in a similar format to OpenAI
-                const images = data.data ? data.data.map(img => img.url) : [data.url];
-                
-                return {
-                    id: Date.now(),
-                    role: 'assistant',
-                    content: `I've generated ${images.length} image(s) based on your description: "${prompt}"`,
-                    mode: 'image',
-                    images: images
-                };
-            } else if (provider === 'google' && model.includes('imagen')) {
-                // Google Imagen API
-                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateImage?key=${settings.apiKey}`;
-                
-                const body = {
-                    prompt: {
-                        text: prompt
-                    },
-                    sampleCount: settings.imageCount,
-                    aspectRatio: settings.imageSize === '1024x1792' ? '9:16' : 
-                                  settings.imageSize === '1792x1024' ? '16:9' : '1:1'
-                };
-
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(body)
-                });
-
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    return { error: data.error?.message || 'Image generation failed' };
-                }
-
-                const images = data.generatedImages.map(img => img.image.pngBytes);
-                
-                return {
-                    id: Date.now(),
-                    role: 'assistant',
-                    content: `I've generated ${images.length} image(s) based on your description: "${prompt}"`,
-                    mode: 'image',
-                    images: images,
-                    isGoogle: true
-                };
-            } else {
-                // OpenAI-compatible format for others
-                const config = modelConfigs[provider];
-                const endpoint = provider === 'openrouter' ? config.endpoints.image : config.endpoints.image;
-                
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${settings.apiKey}`
-                };
-
-                if (provider === 'openrouter') {
-                    headers['HTTP-Referer'] = window.location.origin;
-                    headers['X-Title'] = 'AI Studio';
-                }
-
-                const body = {
-                    model: model,
-                    prompt: prompt,
-                    n: settings.imageCount,
-                    size: settings.imageSize,
-                    quality: settings.imageQuality,
-                    style: settings.imageStyle
-                };
-
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify(body)
-                });
-
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    return { error: data.error?.message || 'Image generation failed' };
-                }
-
-                return {
-                    id: Date.now(),
-                    role: 'assistant',
-                    content: `I've generated ${data.data.length} image(s) based on your description: "${prompt}"`,
-                    mode: 'image',
-                    images: data.data.map(img => img.url)
-                };
-            }
-        }
-
         function addMessageToUI(message) {
             const container = document.getElementById('messages-container');
             const messageDiv = document.createElement('div');
@@ -2067,35 +1693,6 @@
                 } else {
                     content.textContent = message.content;
                 }
-            }
-            
-            // Add images if present
-            if (message.images) {
-                message.images.forEach((imgData, index) => {
-                    const imgContainer = document.createElement('div');
-                    imgContainer.style.marginTop = '12px';
-                    
-                    if (message.isGoogle) {
-                        // Google returns base64 data
-                        const img = document.createElement('img');
-                        img.src = `data:image/png;base64,${imgData}`;
-                        img.className = 'generated-image';
-                        img.onclick = () => {
-                            const win = window.open();
-                            win.document.write(`<img src="${img.src}" style="max-width: 100%; height: auto;">`);
-                        };
-                        imgContainer.appendChild(img);
-                    } else {
-                        // Others return URLs
-                        const img = document.createElement('img');
-                        img.src = imgData;
-                        img.className = 'generated-image';
-                        img.onclick = () => window.open(imgData, '_blank');
-                        imgContainer.appendChild(img);
-                    }
-                    
-                    content.appendChild(imgContainer);
-                });
             }
             
             const actions = document.createElement('div');
@@ -2300,6 +1897,15 @@
                 messageHistory.forEach(message => {
                     addMessageToUI(message);
                 });
+            }
+        }
+
+        function updateInputPlaceholder() {
+            const input = document.getElementById('message-input');
+            if (settings.apiKey) {
+                input.placeholder = 'Type your message here...';
+            } else {
+                input.placeholder = 'Configure your API settings to begin...';
             }
         }
 
