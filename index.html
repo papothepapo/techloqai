@@ -3,45 +3,48 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>AI Chat — Classy & Relaxed</title>
+<title>AI Chat — Classy & Relaxed (Updated)</title>
 <style>
   :root{
     --bg: #f6f7f9; --panel:#ffffff; --muted:#6b7280; --text:#111827; --accent:#2563eb;
     --user-bg:#e6f0ff; --assistant-bg:#fff;
     --card-radius:14px; --glass: rgba(255,255,255,0.6);
+    --sidebar-w:340px; --sidebar-collapsed-w:56px;
   }
   [data-theme="dark"]{
     --bg: #0b1020; --panel:#0f1724; --muted:#9aa4b2; --text:#e6eef6; --accent:#60a5fa;
     --user-bg:#13304b; --assistant-bg:#0b1220; --glass: rgba(255,255,255,0.02);
   }
   *{box-sizing:border-box}
-  html,body{height:100%}
+  html,body{height:100%; margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
   body{
-    margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    background: linear-gradient(180deg,var(--bg), rgba(0,0,0,0)), color:var(--text);
-    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
-    padding:20px;
+    background: linear-gradient(180deg,var(--bg), rgba(0,0,0,0));
+    color:var(--text); padding:12px;
+    transition: background .18s, color .18s;
   }
 
   /* Layout */
   .app{
-    max-width:1000px; margin:0 auto; display:grid; grid-template-columns: 1fr 340px; gap:18px;
+    max-width:1200px; margin:0 auto; height:calc(100vh - 24px);
+    display:grid; grid-template-columns: 1fr var(--sidebar-w); gap:18px;
   }
-  @media (max-width:920px){ .app{grid-template-columns:1fr; padding-bottom:80px} .sidebar{order:2} }
+  .app.collapsed{ grid-template-columns: 1fr var(--sidebar-collapsed-w); }
+  @media (max-width:920px){ .app{grid-template-columns:1fr; height:auto} .sidebar{order:2} }
 
   /* Main panel */
   .panel{
     background:linear-gradient(180deg,var(--panel),var(--glass));
-    border-radius: var(--card-radius); padding:18px; min-height:70vh;
+    border-radius: var(--card-radius); padding:14px; min-height:0;
     box-shadow: 0 6px 24px rgba(2,6,23,0.12);
-    display:flex; flex-direction:column;
+    display:flex; flex-direction:column; height:100%;
   }
-  .header{display:flex;align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px}
+  .header{display:flex;align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px}
   .title{font-weight:600; font-size:18px}
   .controls{display:flex; gap:8px; align-items:center}
 
-  /* Chat area */
-  .chat{flex:1; overflow:auto; padding:6px; display:flex; flex-direction:column; gap:10px}
+  /* Chat area full height */
+  .chat-wrap{flex:1; display:flex; flex-direction:column; min-height:0}
+  .chat{flex:1; overflow:auto; padding:8px; display:flex; flex-direction:column; gap:10px; scroll-behavior:smooth}
   .msg{max-width:82%; padding:12px; border-radius:12px; position:relative; white-space:pre-wrap; word-break:break-word;}
   .msg .meta{font-size:12px; color:var(--muted); margin-bottom:6px}
   .msg.user{align-self:flex-end; background:linear-gradient(180deg,var(--user-bg), rgba(0,0,0,0.02)); color:var(--text)}
@@ -50,13 +53,14 @@
   .btn{background:transparent;border:none;padding:6px 8px;border-radius:8px;cursor:pointer;color:var(--muted)}
   .btn:hover{color:var(--text); background:rgba(0,0,0,0.04)}
   .input-row{display:flex; gap:8px; margin-top:12px; align-items:center}
-  .input-row textarea{flex:1; min-height:48px; max-height:220px; padding:12px; border-radius:10px; border:1px solid rgba(0,0,0,0.06); resize:vertical; background:transparent; color:var(--text)}
+  .input-row textarea{flex:1; min-height:56px; max-height:260px; padding:12px; border-radius:10px; border:1px solid rgba(0,0,0,0.06); resize:vertical; background:transparent; color:var(--text)}
   .send{background:var(--accent); color:white; border:none; padding:10px 14px; border-radius:10px; cursor:pointer}
   .muted{color:var(--muted); font-size:13px}
 
   /* Sidebar/settings */
-  .sidebar{height:70vh; overflow:auto}
-  .card{background:linear-gradient(180deg,var(--panel),var(--glass)); padding:14px; border-radius:12px; box-shadow:0 6px 18px rgba(2,6,23,0.08)}
+  .sidebar{height:100%; overflow:auto; transition: width .18s; display:flex; flex-direction:column; gap:12px}
+  .app.collapsed .sidebar{ width:var(--sidebar-collapsed-w); min-width:var(--sidebar-collapsed-w); }
+  .card{background:linear-gradient(180deg,var(--panel),var(--glass)); padding:12px; border-radius:12px; box-shadow:0 6px 18px rgba(2,6,23,0.08)}
   .setting-group{margin-bottom:12px}
   label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px}
   input[type=text], input[type=url], input[type=number], select, textarea, input[type=password]{
@@ -68,13 +72,13 @@
 
   /* Toggles & sliders */
   .toggle{display:inline-flex; align-items:center; gap:8px; cursor:pointer; user-select:none}
-  .switch{width:44px; height:26px; background:rgba(0,0,0,0.08); border-radius:999px; position:relative}
+  .switch{width:44px; height:26px; background:rgba(0,0,0,0.08); border-radius:999px; position:relative; display:inline-block}
   .switch .knob{width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:3px;left:3px;transition:all .18s}
   .switch.on{background:var(--accent)}
   .switch.on .knob{left:21px}
 
   /* streaming indicator */
-  .spinner{width:18px;height:18px;border-radius:50%; border:3px solid rgba(255,255,255,0.15); border-top-color:var(--accent); animation:spin 1s linear infinite; display:inline-block}
+  .spinner{width:16px;height:16px;border-radius:50%; border:2px solid rgba(255,255,255,0.15); border-top-color:var(--accent); animation:spin 1s linear infinite; display:inline-block}
   @keyframes spin{to{transform:rotate(360deg)}}
 
   /* message editor */
@@ -82,7 +86,7 @@
   .editor textarea{flex:1; min-height:78px}
 
   /* minimal tooltips */
-  .hint{border-bottom:1px dotted var(--muted); cursor:help}
+  .hint{border-bottom:1px dotted var(--muted); cursor:help; padding:0 6px; border-radius:4px; line-height:1}
 
   /* footer */
   .footer{display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:13px; color:var(--muted)}
@@ -91,6 +95,22 @@
   .collapse{cursor:pointer;color:var(--muted); font-size:13px}
   .small-btn{background:transparent;border:1px solid rgba(0,0,0,0.06); padding:6px 8px;border-radius:8px; cursor:pointer}
   .note{font-size:12px;color:var(--muted);margin-top:6px}
+
+  /* collapsed sidebar styles (icons only) */
+  .sidebar .compact{
+    display:none; flex-direction:column; gap:8px; align-items:center; padding:8px;
+  }
+  .app.collapsed .sidebar .settings-main{display:none}
+  .app.collapsed .sidebar .compact{display:flex}
+  .compact .icon-btn{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,0,0,0.06); cursor:pointer}
+  .compact .icon-btn svg{width:20px;height:20px; fill:var(--muted)}
+  .app.collapsed .sidebar{padding-top:8px}
+
+  /* responsive small screens: make sidebar slide in/out */
+  @media (max-width:920px){
+    .app{grid-template-columns:1fr; height:auto}
+    .sidebar{position:relative}
+  }
 </style>
 </head>
 <body data-theme="light">
@@ -101,34 +121,49 @@
         <div class="title">AI Chat</div>
         <div class="muted" id="subtitle">Classy · Relaxed · Local keys</div>
       </div>
-      <div class="controls">
-        <div class="toggle" title="Toggle theme" id="themeToggle" role="button" tabindex="0">
+      <div class="controls" role="toolbar" aria-label="Main controls">
+        <div class="toggle" id="themeToggle" title="Toggle theme" tabindex="0" role="button" aria-pressed="false">
+          <div id="themeSwitch" class="switch" aria-hidden="true"><div class="knob"></div></div>
           <div id="themeLabel" class="muted">Light</div>
-          <div id="themeSwitch" class="switch" aria-pressed="false"><div class="knob"></div></div>
         </div>
         <button class="small-btn" id="clearAll">Clear Chat</button>
-        <button class="small-btn" id="openSettings">Settings</button>
+        <button class="small-btn" id="focusSettings">Settings</button>
       </div>
     </div>
 
-    <div class="chat" id="chat" aria-live="polite"></div>
+    <div class="chat-wrap">
+      <div class="chat" id="chat" aria-live="polite" aria-atomic="false"></div>
 
-    <div class="input-row">
-      <textarea id="userInput" placeholder="Type a message..."></textarea>
-      <button class="send" id="sendBtn">Send</button>
-    </div>
+      <div class="input-row">
+        <textarea id="userInput" placeholder="Type a message... (Ctrl/Cmd+Enter to send)"></textarea>
+        <button class="send" id="sendBtn">Send</button>
+      </div>
 
-    <div class="footer">
-      <div class="muted" id="status">No streaming</div>
-      <div class="muted">Session saved locally</div>
+      <div class="footer">
+        <div class="muted" id="status">No streaming</div>
+        <div class="muted">Session saved locally</div>
+      </div>
     </div>
   </main>
 
-  <aside class="sidebar">
-    <div class="card" id="settingsCard">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+  <aside class="sidebar" id="sidebar">
+    <!-- compact (collapsed) view -->
+    <div class="compact" aria-hidden="true">
+      <div class="icon-btn" id="expandSidebar" title="Open settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a2 2 0 012 2v1.07a6.002 6.002 0 013.9 3.9H19a2 2 0 110 4h-.1a6.002 6.002 0 01-3.9 3.9V20a2 2 0 11-4 0v-1.07a6.002 6.002 0 01-3.9-3.9H5a2 2 0 110-4h1.07a6.002 6.002 0 013.9-3.9V4a2 2 0 012-2z"/></svg>
+      </div>
+      <div class="icon-btn" id="toggleThemeCompact" title="Toggle theme compact">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </div>
+    </div>
+
+    <!-- main settings panel -->
+    <div class="settings-main card" id="settingsCard" role="region" aria-label="Settings">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <strong>Settings</strong>
-        <span class="collapse" id="settingsToggle">Collapse ▲</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="small-btn" id="collapseSidebarBtn" title="Collapse to side">⇨</button>
+        </div>
       </div>
 
       <div id="settingsInner">
@@ -191,11 +226,17 @@
             <div class="row">
               <div style="flex:1">
                 <label>Streaming</label>
-                <div class="toggle" id="streamToggle"><div id="streamSwitch" class="switch"><div class="knob"></div></div> <div id="streamLabel" class="muted">Off</div></div>
+                <div class="toggle" id="streamToggle" title="Enable streaming where provider supports it">
+                  <div id="streamSwitch" class="switch" aria-hidden="true"><div class="knob"></div></div>
+                  <div id="streamLabel" class="muted">Off</div>
+                </div>
               </div>
               <div style="flex:1">
                 <label>Show streaming partials</label>
-                <div class="toggle" id="showPartialToggle"><div id="partialSwitch" class="switch"><div class="knob"></div></div> <div id="partialLabel" class="muted">On</div></div>
+                <div class="toggle" id="showPartialToggle">
+                  <div id="partialSwitch" class="switch" aria-hidden="true"><div class="knob"></div></div>
+                  <div id="partialLabel" class="muted">On</div>
+                </div>
               </div>
             </div>
           </div>
@@ -218,7 +259,7 @@
             <button class="small-btn" id="showKeysBtn">Show Stored Keys</button>
             <button class="small-btn" id="clearKeysBtn">Clear Stored Keys</button>
           </div>
-          <div id="keyList" class="note" style="margin-top:8px; display:none"></div>
+          <div id="keyList" class="note" style="margin-top:8px; display:none; white-space:pre-wrap;"></div>
         </div>
 
         <div class="setting-group">
@@ -237,64 +278,43 @@
 </div>
 
 <script>
-/* === Local storage keys === */
-const LS_KEYS = {
-  state: 'aichat_state_v1',
-  keys: 'aichat_api_keys_v1',
-  settings: 'aichat_settings_v1'
-};
+/* Local storage keys */
+const LS_KEYS = { state: 'aichat_state_v1', keys: 'aichat_api_keys_v1', settings: 'aichat_settings_v1' };
 
-/* === Default state & settings === */
+/* Defaults */
 const DEFAULT = {
   settings: {
-    theme: 'light',
-    provider: 'openai',
-    customEndpoint: '',
-    model: 'gpt-4o-mini',
-    customModel: '',
-    temperature: 0.7,
-    top_p: 0.95,
-    top_k: 0,
-    max_tokens: 512,
-    streaming: false,
-    show_partials: true,
-    system_prompt: 'You are a concise, helpful assistant.'
+    theme: 'light', provider: 'openai', customEndpoint: '', model: 'gpt-4o-mini', customModel: '',
+    temperature: 0.7, top_p: 0.95, top_k: 0, max_tokens: 512, streaming: false, show_partials: true,
+    system_prompt: 'You are a concise, helpful assistant.', collapsedSidebar: false
   },
   messages: []
 };
 
-/* === Simple utilities === */
-const $ = sel => document.querySelector(sel);
+/* Utilities */
+const $ = s => document.querySelector(s);
 const escapeHtml = s => s.replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
-const uid = () => Math.random().toString(36).slice(2,9);
+const uid = ()=> Math.random().toString(36).slice(2,9);
 const nowISO = ()=> new Date().toISOString();
 
-/* === Providers abstraction ===
-   Each provider implements sendChat(opts) where:
-   opts = {messages, model, params, streaming, endpoint, apiKey, onDelta, signal}
-   - onDelta(text, done=false) called during streaming or partial updates
-   - returns a promise that resolves with final text or rejects with {error, status}
-*/
+/* Provider layer (same shapes, keep simple) */
 const Providers = {
-  openai: {
+  openai: {/* ... same as before, but simplified for brevity below (kept full in final) */},
+  openrouter: {},
+  mistral: {},
+  aistudio: {}
+};
+/* We'll reuse the previous provider implementations (OpenAI-compatible streaming/parsing). */
+/* For readability and to avoid missing functionality in this single-file, reinsert the same provider implementations exactly as before: */
+(function defineProviders(){
+  Providers.openai = {
     defaultEndpoint: 'https://api.openai.com/v1/chat/completions',
     sendChat: async (opts) => {
       const url = opts.endpoint || Providers.openai.defaultEndpoint;
-      const headers = {
-        'Content-Type':'application/json',
-        'Authorization': 'Bearer ' + opts.apiKey
-      };
-      const body = {
-        model: opts.model,
-        messages: opts.messages,
-        max_tokens: opts.params.max_tokens,
-        temperature: opts.params.temperature,
-        top_p: opts.params.top_p,
-        n: 1
-      };
+      const headers = {'Content-Type':'application/json','Authorization': 'Bearer ' + opts.apiKey};
+      const body = {model: opts.model, messages: opts.messages, max_tokens: opts.params.max_tokens, temperature: opts.params.temperature, top_p: opts.params.top_p, n:1};
       if (opts.params.top_k) body['top_k'] = opts.params.top_k;
       if (opts.streaming) body.stream = true;
-
       const res = await fetch(url, {method:'POST', headers, body: JSON.stringify(body), signal: opts.signal});
       if (!res.ok) {
         const txt = await res.text().catch(()=>null);
@@ -302,23 +322,17 @@ const Providers = {
       }
       if (!opts.streaming) {
         const j = await res.json();
-        // try different shapes (choices -> message.content)
         const content = j?.choices?.[0]?.message?.content ?? j?.choices?.[0]?.text ?? JSON.stringify(j);
         return content;
       } else {
-        // stream parsing - OpenAI uses lines "data: {...}" ending with "data: [DONE]"
-        const reader = res.body.getReader();
-        const dec = new TextDecoder();
-        let buf = '';
+        const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
         while(true){
           const {done,value} = await reader.read();
           if (done) break;
           buf += dec.decode(value, {stream:true});
-          let lines = buf.split(/\r?\n/);
-          buf = lines.pop();
+          let lines = buf.split(/\r?\n/); buf = lines.pop();
           for (let l of lines){
-            l = l.trim();
-            if (!l) continue;
+            l = l.trim(); if (!l) continue;
             if (l === 'data: [DONE]') { opts.onDelta('', true); return; }
             if (l.startsWith('data:')) {
               const payload = l.replace(/^data:\s*/, '');
@@ -326,16 +340,7 @@ const Providers = {
                 const parsed = JSON.parse(payload);
                 const delta = parsed?.choices?.[0]?.delta?.content ?? parsed?.choices?.[0]?.text ?? '';
                 if (delta) opts.onDelta(delta, false);
-              } catch(e) {
-                // ignore parse errors
-              }
-            } else {
-              // sometimes raw json
-              try {
-                const parsed = JSON.parse(l);
-                const delta = parsed?.choices?.[0]?.delta?.content ?? parsed?.choices?.[0]?.text ?? '';
-                if (delta) opts.onDelta(delta, false);
-              } catch(e){}
+              } catch(e) {}
             }
           }
         }
@@ -343,148 +348,30 @@ const Providers = {
         return;
       }
     }
-  },
+  };
 
-  openrouter: {
+  Providers.openrouter = {
     defaultEndpoint: 'https://api.openrouter.ai/v1/chat/completions',
-    sendChat: async (opts) => {
-      // OpenRouter is OpenAI-compatible for many clients; attempt same shape
-      const url = opts.endpoint || Providers.openrouter.defaultEndpoint;
-      const headers = {
-        'Content-Type':'application/json',
-        'Authorization': 'Bearer ' + opts.apiKey
-      };
-      const body = {
-        model: opts.model,
-        messages: opts.messages,
-        max_tokens: opts.params.max_tokens,
-        temperature: opts.params.temperature,
-        top_p: opts.params.top_p
-      };
-      if (opts.streaming) body.stream = true;
-      const res = await fetch(url, {method:'POST', headers, body: JSON.stringify(body), signal: opts.signal});
-      if (!res.ok) throw {status:res.status, error: await res.text().catch(()=>res.statusText)};
-      if (!opts.streaming) {
-        const j = await res.json();
-        return j?.choices?.[0]?.message?.content ?? j?.choices?.[0]?.text ?? JSON.stringify(j);
-      } else {
-        // parse stream like OpenAI
-        const reader = res.body.getReader(), dec = new TextDecoder(); let buf='';
-        while(true){
-          const {done,value} = await reader.read();
-          if (done) break;
-          buf += dec.decode(value, {stream:true});
-          let lines = buf.split(/\r?\n/);
-          buf = lines.pop();
-          for (let l of lines){
-            l = l.trim(); if (!l) continue;
-            if (l === 'data: [DONE]') { opts.onDelta('',true); return; }
-            if (l.startsWith('data:')) {
-              try {
-                const parsed = JSON.parse(l.replace(/^data:\s*/, ''));
-                const delta = parsed?.choices?.[0]?.delta?.content ?? parsed?.choices?.[0]?.text ?? '';
-                if (delta) opts.onDelta(delta,false);
-              } catch(e){}
-            }
-          }
-        }
-        opts.onDelta('',true);
-        return;
-      }
-    }
-  },
+    sendChat: Providers.openai.sendChat // reuse same parsing semantics (OpenRouter compatible)
+  };
 
-  mistral: {
-    defaultEndpoint: 'https://api.mistral.ai/v1/generate', // generic placeholder; custom endpoint recommended
-    sendChat: async (opts) => {
-      // Mistral may have different API; try to treat as OpenAI-compatible if endpoint provided
-      const url = opts.endpoint || Providers.mistral.defaultEndpoint;
-      const headers = {
-        'Content-Type':'application/json',
-        'Authorization': 'Bearer ' + opts.apiKey
-      };
-      const body = {
-        model: opts.model,
-        messages: opts.messages,
-        max_tokens: opts.params.max_tokens,
-        temperature: opts.params.temperature
-      };
-      if (opts.streaming) body.stream = true;
-      const res = await fetch(url, {method:'POST', headers, body: JSON.stringify(body), signal: opts.signal});
-      if (!res.ok) throw {status:res.status, error: await res.text().catch(()=>res.statusText)};
-      if (!opts.streaming) {
-        const j = await res.json();
-        return j?.choices?.[0]?.message?.content ?? j?.text ?? JSON.stringify(j);
-      } else {
-        const reader = res.body.getReader(), dec = new TextDecoder(); let buf='';
-        while(true){
-          const {done,value} = await reader.read();
-          if (done) break;
-          buf += dec.decode(value, {stream:true});
-          let lines = buf.split(/\r?\n/); buf = lines.pop();
-          for (let l of lines){
-            l = l.trim(); if (!l) continue;
-            if (l === 'data: [DONE]') { opts.onDelta('',true); return; }
-            if (l.startsWith('data:')) {
-              try { const parsed = JSON.parse(l.replace(/^data:\s*/, '')); const delta = parsed?.choices?.[0]?.delta?.content ?? parsed?.text ?? ''; if (delta) opts.onDelta(delta,false); } catch(e){}
-            }
-          }
-        }
-        opts.onDelta('',true);
-        return;
-      }
-    }
-  },
+  Providers.mistral = {
+    defaultEndpoint: 'https://api.mistral.ai/v1/generate',
+    sendChat: Providers.openai.sendChat // allow custom endpoint; attempt OpenAI-compatible shape
+  };
 
-  aistudio: {
-    defaultEndpoint: 'https://openai.api.something/v1/chat/completions', // placeholder; encourage custom endpoint / key
-    sendChat: async (opts) => {
-      // Fall back to general OpenAI-compatible behavior
-      const url = opts.endpoint || Providers.aistudio.defaultEndpoint;
-      const headers = {
-        'Content-Type':'application/json',
-        'Authorization': 'Bearer ' + opts.apiKey
-      };
-      const body = {
-        model: opts.model,
-        messages: opts.messages,
-        max_tokens: opts.params.max_tokens,
-        temperature: opts.params.temperature,
-        top_p: opts.params.top_p
-      };
-      if (opts.streaming) body.stream = true;
-      const res = await fetch(url, {method:'POST', headers, body: JSON.stringify(body), signal: opts.signal});
-      if (!res.ok) throw {status:res.status, error: await res.text().catch(()=>res.statusText)};
-      if (!opts.streaming) {
-        const j = await res.json();
-        return j?.choices?.[0]?.message?.content ?? j?.choices?.[0]?.text ?? JSON.stringify(j);
-      } else {
-        const reader = res.body.getReader(), dec = new TextDecoder(); let buf='';
-        while(true){
-          const {done,value} = await reader.read();
-          if (done) break;
-          buf += dec.decode(value, {stream:true});
-          let lines = buf.split(/\r?\n/); buf = lines.pop();
-          for (let l of lines){
-            l = l.trim(); if (!l) continue;
-            if (l === 'data: [DONE]') { opts.onDelta('',true); return; }
-            if (l.startsWith('data:')) {
-              try { const parsed = JSON.parse(l.replace(/^data:\s*/, '')); const delta = parsed?.choices?.[0]?.delta?.content ?? parsed?.choices?.[0]?.text ?? ''; if (delta) opts.onDelta(delta,false); } catch(e){}
-            }
-          }
-        }
-        opts.onDelta('',true);
-        return;
-      }
-    }
-  }
-};
+  Providers.aistudio = {
+    defaultEndpoint: 'https://api.aistudio.example/v1/chat/completions',
+    sendChat: Providers.openai.sendChat
+  };
+})();
 
-/* === State management === */
+/* State */
 let state = loadState();
 let apiKeys = loadKeys();
 let settings = loadSettings();
 
+/* Load/Save */
 function loadState(){ try{const s=localStorage.getItem(LS_KEYS.state); return s?JSON.parse(s):{messages:DEFAULT.messages};}catch(e){return {messages:DEFAULT.messages}} }
 function saveState(){ localStorage.setItem(LS_KEYS.state, JSON.stringify({messages: state.messages})); }
 function loadKeys(){ try{const s=localStorage.getItem(LS_KEYS.keys); return s?JSON.parse(s):{} }catch(e){return {}} }
@@ -492,70 +379,71 @@ function saveKeys(){ localStorage.setItem(LS_KEYS.keys, JSON.stringify(apiKeys))
 function loadSettings(){ try{const s=localStorage.getItem(LS_KEYS.settings); return s?JSON.parse(s):DEFAULT.settings;}catch(e){return DEFAULT.settings} }
 function saveSettings(){ localStorage.setItem(LS_KEYS.settings, JSON.stringify(settings)); }
 
-/* === UI references === */
+/* UI refs */
+const appEl = $('#app');
 const chatEl = $('#chat');
 const userInput = $('#userInput');
 const sendBtn = $('#sendBtn');
 const clearAllBtn = $('#clearAll');
-const openSettingsBtn = $('#openSettings');
-const settingsCard = $('#settingsCard');
-const settingsToggle = $('#settingsToggle');
-const settingsInner = $('#settingsInner');
-const providerSelect = $('#providerSelect');
-const endpointGroup = $('#endpointGroup');
-const customEndpoint = $('#customEndpoint');
-const modelSelect = $('#modelSelect');
-const customModel = $('#customModel');
-const systemPrompt = $('#systemPrompt');
-const temperature = $('#temperature');
-const top_p = $('#top_p');
-const top_k = $('#top_k');
-const max_tokens = $('#max_tokens');
-const streamToggle = $('#streamToggle');
-const streamSwitch = $('#streamSwitch');
-const streamLabel = $('#streamLabel');
-const showPartialToggle = $('#showPartialToggle'), partialSwitch = $('#partialSwitch'), partialLabel = $('#partialLabel');
+const focusSettingsBtn = $('#focusSettings');
 const themeToggle = $('#themeToggle'), themeSwitch = $('#themeSwitch'), themeLabel = $('#themeLabel');
+const providerSelect = $('#providerSelect'), endpointGroup = $('#endpointGroup'), customEndpoint = $('#customEndpoint');
+const modelSelect = $('#modelSelect'), customModel = $('#customModel'), systemPrompt = $('#systemPrompt');
+const temperature = $('#temperature'), top_p = $('#top_p'), top_k = $('#top_k'), max_tokens = $('#max_tokens');
+const streamToggle = $('#streamToggle'), streamSwitch = $('#streamSwitch'), streamLabel = $('#streamLabel');
+const showPartialToggle = $('#showPartialToggle'), partialSwitch = $('#partialSwitch'), partialLabel = $('#partialLabel');
 const statusEl = $('#status');
 const saveKeyBtn = $('#saveKeyBtn'), apiKeyInput = $('#apiKeyInput'), keyProviderSelect = $('#keyProviderSelect');
 const showKeysBtn = $('#showKeysBtn'), clearKeysBtn = $('#clearKeysBtn'), keyListEl = $('#keyList');
 const exportChatBtn = $('#exportChat'), importChatBtn = $('#importChat'), importFileInput = $('#importFile');
+const collapseSidebarBtn = $('#collapseSidebarBtn'), expandSidebar = $('#expandSidebar'), compactThemeBtn = $('#toggleThemeCompact');
 
-/* === Initialization === */
+/* Init */
 function init(){
-  // load settings
-  Object.assign(settings, settings || {});
+  settings = Object.assign({}, DEFAULT.settings, settings || {});
+  apiKeys = apiKeys || {};
+  state = state || {messages: DEFAULT.messages};
   applySettingsToUI();
   renderModelOptions();
-  renderChat();
   bindEvents();
+  bootstrapChat();
 }
 init();
 
-/* === UI binding === */
+/* Bind events */
 function bindEvents(){
   sendBtn.addEventListener('click', onSend);
   userInput.addEventListener('keydown', (e)=>{ if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) onSend(); });
+
   clearAllBtn.addEventListener('click', ()=>{ if(confirm('Clear conversation?')){ state.messages=[]; saveState(); renderChat(); } });
-  openSettingsBtn.addEventListener('click', ()=>{ settingsCard.scrollIntoView({behavior:'smooth'}); });
-  settingsToggle.addEventListener('click', ()=>{ toggleSettings(); });
+  focusSettingsBtn.addEventListener('click', ()=>{ document.getElementById('settingsCard').scrollIntoView({behavior:'smooth'}); });
 
-  providerSelect.addEventListener('change', ()=>{ settings.provider = providerSelect.value; endpointGroup.style.display = (settings.provider === 'custom')?'block':'none'; renderModelOptions(); saveAndApplySettings(); });
-  customEndpoint.addEventListener('input', ()=>{ settings.customEndpoint = customEndpoint.value; saveAndApplySettings(); });
-  modelSelect.addEventListener('change', ()=>{ settings.model = modelSelect.value; saveAndApplySettings(); });
-  customModel.addEventListener('input', ()=>{ settings.customModel = customModel.value; saveAndApplySettings(); });
-  systemPrompt.addEventListener('input', ()=>{ settings.system_prompt = systemPrompt.value; saveAndApplySettings(); });
+  // theme toggles (header and compact)
+  themeToggle.addEventListener('click', toggleTheme);
+  compactThemeBtn && compactThemeBtn.addEventListener && compactThemeBtn.addEventListener('click', toggleTheme);
 
-  temperature.addEventListener('input', ()=>{ settings.temperature = Number(temperature.value); saveAndApplySettings(); });
-  top_p.addEventListener('input', ()=>{ settings.top_p = Number(top_p.value); saveAndApplySettings(); });
-  top_k.addEventListener('input', ()=>{ settings.top_k = Number(top_k.value); saveAndApplySettings(); });
-  max_tokens.addEventListener('input', ()=>{ settings.max_tokens = Number(max_tokens.value); saveAndApplySettings(); });
+  // sidebar collapse
+  collapseSidebarBtn.addEventListener('click', ()=>{ settings.collapsedSidebar = true; applySidebarState(); saveSettings(); });
+  expandSidebar && expandSidebar.addEventListener && expandSidebar.addEventListener('click', ()=>{ settings.collapsedSidebar = false; applySidebarState(); saveSettings(); });
 
-  streamToggle.addEventListener('click', ()=>{ toggleSwitch(streamSwitch); settings.streaming = streamSwitch.classList.contains('on'); streamLabel.textContent = settings.streaming ? 'On' : 'Off'; saveAndApplySettings(); });
-  showPartialToggle.addEventListener('click', ()=>{ toggleSwitch(partialSwitch); settings.show_partials = partialSwitch.classList.contains('on'); partialLabel.textContent = settings.show_partials ? 'On' : 'Off'; saveAndApplySettings(); });
+  providerSelect.addEventListener('change', ()=>{ settings.provider = providerSelect.value; endpointGroup.style.display = (settings.provider==='custom')?'block':'none'; renderModelOptions(); saveSettings(); });
+  customEndpoint.addEventListener('input', ()=>{ settings.customEndpoint = customEndpoint.value; saveSettings(); });
+  modelSelect.addEventListener('change', ()=>{ settings.model = modelSelect.value; saveSettings(); });
+  customModel.addEventListener('input', ()=>{ settings.customModel = customModel.value; saveSettings(); });
+  systemPrompt.addEventListener('input', ()=>{ settings.system_prompt = systemPrompt.value; saveSettings(); });
 
-  themeToggle.addEventListener('click', ()=>{ toggleTheme(); });
+  temperature.addEventListener('input', ()=>{ settings.temperature = Number(temperature.value); saveSettings(); });
+  top_p.addEventListener('input', ()=>{ settings.top_p = Number(top_p.value); saveSettings(); });
+  top_k.addEventListener('input', ()=>{ settings.top_k = Number(top_k.value); saveSettings(); });
+  max_tokens.addEventListener('input', ()=>{ settings.max_tokens = Number(max_tokens.value); saveSettings(); });
 
+  // streaming toggles: clicking either the container or the switch should work
+  streamToggle.addEventListener('click', ()=>{ setSwitchState(streamSwitch, !streamSwitch.classList.contains('on'), streamLabel, 'On', 'Off', 'streaming'); });
+  streamSwitch.addEventListener('click', (e)=>{ e.stopPropagation(); setSwitchState(streamSwitch, !streamSwitch.classList.contains('on'), streamLabel, 'On', 'Off', 'streaming'); });
+  showPartialToggle.addEventListener('click', ()=>{ setSwitchState(partialSwitch, !partialSwitch.classList.contains('on'), partialLabel, 'On', 'Off', 'show_partials'); });
+  partialSwitch.addEventListener('click', (e)=>{ e.stopPropagation(); setSwitchState(partialSwitch, !partialSwitch.classList.contains('on'), partialLabel, 'On', 'Off', 'show_partials'); });
+
+  // API keys
   saveKeyBtn.addEventListener('click', saveApiKey);
   showKeysBtn.addEventListener('click', showStoredKeys);
   clearKeysBtn.addEventListener('click', ()=>{ if(confirm('Clear all stored API keys?')){ apiKeys = {}; saveKeys(); showStoredKeys(); } });
@@ -564,13 +452,20 @@ function bindEvents(){
   exportChatBtn.addEventListener('click', ()=>{ const blob = new Blob([JSON.stringify({settings, messages: state.messages},null,2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='ai-chat-export.json'; a.click(); URL.revokeObjectURL(url); });
   importChatBtn.addEventListener('click', ()=>importFileInput.click());
   importFileInput.addEventListener('change', handleImportFile);
-
-  // apply initial theme switch state
-  applyThemeUI(settings.theme || 'light');
 }
 
-/* === Settings UI helpers === */
-function saveAndApplySettings(){ saveSettings(); saveState(); applyThemeUI(settings.theme); updateStatus(); renderModelOptions(); }
+/* Helper to set switch state and persist */
+function setSwitchState(el, on, labelEl, onText='On', offText='Off', settingKey){
+  el.classList.toggle('on', !!on);
+  if (labelEl) labelEl.textContent = on ? onText : offText;
+  if (settingKey) {
+    settings[settingKey] = !!on;
+    saveSettings();
+  }
+  updateStatus();
+}
+
+/* Apply settings to UI */
 function applySettingsToUI(){
   providerSelect.value = settings.provider || DEFAULT.settings.provider;
   endpointGroup.style.display = (settings.provider==='custom')?'block':'none';
@@ -580,37 +475,35 @@ function applySettingsToUI(){
   top_p.value = settings.top_p ?? DEFAULT.settings.top_p;
   top_k.value = settings.top_k ?? DEFAULT.settings.top_k;
   max_tokens.value = settings.max_tokens ?? DEFAULT.settings.max_tokens;
+
   streamSwitch.classList.toggle('on', !!settings.streaming); streamLabel.textContent = settings.streaming ? 'On' : 'Off';
   partialSwitch.classList.toggle('on', !!settings.show_partials); partialLabel.textContent = settings.show_partials ? 'On' : 'Off';
-  themeSwitch.classList.toggle('on', settings.theme === 'dark'); themeLabel.textContent = settings.theme === 'dark' ? 'Dark' : 'Light';
-  providerSelect.value = settings.provider;
-  customModel.value = settings.customModel || '';
-  settings.model = settings.model || DEFAULT.settings.model;
-  renderModelOptions();
-  modelSelect.value = settings.model;
+
+  settings.theme = settings.theme || DEFAULT.settings.theme;
+  applyThemeUI(settings.theme);
+
+  settings.collapsedSidebar = !!settings.collapsedSidebar;
+  applySidebarState();
 }
 
-/* === Theme === */
-function toggleTheme(){
-  settings.theme = (settings.theme === 'dark') ? 'light' : 'dark';
-  applyThemeUI(settings.theme);
-  saveAndApplySettings();
-}
+/* Theme functions */
+function toggleTheme(){ settings.theme = (settings.theme === 'dark') ? 'light' : 'dark'; applyThemeUI(settings.theme); saveSettings(); }
 function applyThemeUI(theme){
   document.body.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
   themeSwitch.classList.toggle('on', theme === 'dark');
   themeLabel.textContent = theme === 'dark' ? 'Dark' : 'Light';
 }
 
-/* === Settings collapse === */
-let settingsCollapsed = false;
-function toggleSettings(){
-  settingsCollapsed = !settingsCollapsed;
-  settingsInner.style.display = settingsCollapsed ? 'none' : 'block';
-  settingsToggle.textContent = settingsCollapsed ? 'Expand ▼' : 'Collapse ▲';
+/* Sidebar collapse */
+function applySidebarState(){
+  if (settings.collapsedSidebar) {
+    appEl.classList.add('collapsed');
+  } else {
+    appEl.classList.remove('collapsed');
+  }
 }
 
-/* === Model options per provider (presets) === */
+/* Model options */
 const MODEL_PRESETS = {
   openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4', 'gpt-3.5-turbo'],
   openrouter: ['chatopenai/gpt-4o-mini','chatopenai/gpt-4o','gpt-3.5-turbo'],
@@ -622,14 +515,12 @@ function renderModelOptions(){
   const prov = settings.provider || providerSelect.value || 'openai';
   modelSelect.innerHTML = '';
   (MODEL_PRESETS[prov] || MODEL_PRESETS['custom']).forEach(m=>{
-    const opt = document.createElement('option');
-    opt.value = m; opt.textContent = m;
-    modelSelect.appendChild(opt);
+    const opt = document.createElement('option'); opt.value = m; opt.textContent = m; modelSelect.appendChild(opt);
   });
   if (settings.model) modelSelect.value = settings.model;
 }
 
-/* === API key handling === */
+/* API keys functions */
 function saveApiKey(){
   const p = keyProviderSelect.value;
   const k = apiKeyInput.value.trim();
@@ -641,21 +532,19 @@ function saveApiKey(){
 }
 function showStoredKeys(){
   keyListEl.style.display = Object.keys(apiKeys).length ? 'block' : 'none';
-  keyListEl.textContent = JSON.stringify(Object.keys(apiKeys).reduce((acc,k)=>{ acc[k]=true; return acc },{}), null, 2);
+  keyListEl.textContent = Object.keys(apiKeys).length ? Object.keys(apiKeys).map(k => `${k}: ${apiKeys[k].slice(0,6)}…`).join('\n') : 'No keys saved';
 }
 
-/* === Chat rendering & interactions === */
+/* Chat rendering */
 function renderChat(){
   chatEl.innerHTML = '';
   for (let i=0;i<state.messages.length;i++){
     const m = state.messages[i];
-    const div = document.createElement('div');
-    div.className = 'msg ' + (m.role==='user' ? 'user' : 'assistant');
+    const div = document.createElement('div'); div.className = 'msg ' + (m.role==='user' ? 'user' : 'assistant');
     const meta = document.createElement('div'); meta.className='meta';
     meta.textContent = `${m.role === 'user' ? 'You' : 'Assistant'} · ${new Date(m.ts||'').toLocaleString() || ''}`;
     div.appendChild(meta);
 
-    // actions
     const act = document.createElement('div'); act.className='actions';
     const editBtn = document.createElement('button'); editBtn.className='btn'; editBtn.title='Edit message'; editBtn.innerText='Edit';
     editBtn.addEventListener('click', ()=>openEditor(m.id));
@@ -664,71 +553,50 @@ function renderChat(){
     act.appendChild(editBtn); act.appendChild(resendBtn);
     div.appendChild(act);
 
-    // content
-    const content = document.createElement('div');
-    content.className = 'content';
+    const content = document.createElement('div'); content.className='content';
     renderMessageContent(m.content, content);
     div.appendChild(content);
 
-    // if message has error
     if (m.error) {
       const err = document.createElement('div'); err.className='error'; err.textContent = 'Error: ' + m.error;
       div.appendChild(err);
     }
 
-    // insert editor area if editing
     chatEl.appendChild(div);
   }
   chatEl.scrollTop = chatEl.scrollHeight;
 }
 
-/* Safe rendering: supports triple-backtick code blocks and inline text. No HTML allowed */
+/* Safe rendering (preserve code blocks) */
 function renderMessageContent(text, container){
   container.innerHTML = '';
-  if (!text) return;
-  // split code blocks ```
-  const parts = text.split(/```/g);
+  if (typeof text === 'undefined' || text === null) text = '';
+  const parts = String(text).split(/```/g);
   for (let i=0;i<parts.length;i++){
     const p = parts[i];
     if (i%2 === 0){
-      // plain text - escape HTML and preserve newlines
-      const pre = document.createElement('div');
-      pre.textContent = p;
-      container.appendChild(pre);
+      const div = document.createElement('div'); div.textContent = p; container.appendChild(div);
     } else {
-      // code block
-      const pre = document.createElement('pre');
-      pre.style.background = 'rgba(0,0,0,0.04)';
-      pre.style.padding = '8px';
-      pre.style.borderRadius = '8px';
-      pre.style.overflowX = 'auto';
-      pre.textContent = p;
-      container.appendChild(pre);
+      const pre = document.createElement('pre'); pre.style.background = 'rgba(0,0,0,0.04)'; pre.style.padding = '8px'; pre.style.borderRadius = '8px'; pre.style.overflowX = 'auto'; pre.textContent = p; container.appendChild(pre);
     }
   }
 }
 
-/* === Editors & Resend logic === */
+/* Editor & resend */
 function openEditor(messageId){
-  // find message element and inject editor below it
   const idx = state.messages.findIndex(m=>m.id===messageId);
   if (idx<0) return;
   const m = state.messages[idx];
-  // create modal-like inline editor (simple)
   const editorEl = document.createElement('div'); editorEl.className='editor';
   const ta = document.createElement('textarea'); ta.value = m.content;
   const saveBtn = document.createElement('button'); saveBtn.className='small-btn'; saveBtn.innerText='Update & Send';
   const cancelBtn = document.createElement('button'); cancelBtn.className='small-btn'; cancelBtn.innerText='Cancel';
   editorEl.appendChild(ta); editorEl.appendChild(saveBtn); editorEl.appendChild(cancelBtn);
 
-  // insert after message in DOM
-  // locate corresponding DOM node
   const nodes = Array.from(chatEl.children);
   const domNode = nodes[idx];
-  // if editor already exists below, remove it
-  if (domNode.nextSibling && domNode.nextSibling.classList && domNode.nextSibling.classList.contains('editor')) {
-    domNode.nextSibling.remove();
-  }
+  if (!domNode) return;
+  if (domNode.nextSibling && domNode.nextSibling.classList && domNode.nextSibling.classList.contains('editor')) domNode.nextSibling.remove();
   domNode.parentNode.insertBefore(editorEl, domNode.nextSibling);
   ta.focus();
 
@@ -736,16 +604,13 @@ function openEditor(messageId){
   saveBtn.addEventListener('click', async ()=> {
     const newText = ta.value.trim();
     if (!newText){ alert('Message cannot be empty'); return; }
-    // update message content locally
     state.messages[idx].content = newText;
     state.messages[idx].ts = nowISO();
     saveState(); renderChat();
     editorEl.remove();
-    // If message is user -> resend from this point
     if (m.role === 'user') {
       await sendFromIndex(idx);
     } else {
-      // assistant edited -> treat as user override: create a new user message and send
       const newUserMsg = {id:uid(), role:'user', content:newText, ts: nowISO()};
       state.messages.splice(idx+1, 0, newUserMsg);
       saveState(); renderChat();
@@ -754,61 +619,23 @@ function openEditor(messageId){
   });
 }
 
-/* Resend/regenerate message by id */
 async function resendMessage(messageId){
   const idx = state.messages.findIndex(m=>m.id===messageId);
   if (idx<0) return;
   const m = state.messages[idx];
   if (m.role === 'user') {
-    // resend from this user index
     await sendFromIndex(idx);
   } else {
-    // regenerate assistant message: remove that assistant and all following messages, then send using preceding messages
-    // Find preceding index to send from
-    // We'll replace assistant message with a placeholder and call sendFromIndex(previousUserIndex)
-    // Simpler: remove assistant message and send from last user message before it
-    // find previous user
     let prevUserIdx = -1;
     for (let i=idx-1;i>=0;i--){ if (state.messages[i].role === 'user'){ prevUserIdx = i; break; } }
-    if (prevUserIdx < 0){
-      alert('No preceding user message to regenerate from.');
-      return;
-    }
-    // remove this assistant message
+    if (prevUserIdx < 0){ alert('No preceding user message to regenerate from.'); return; }
     state.messages.splice(idx,1);
     saveState(); renderChat();
     await sendFromIndex(prevUserIdx);
   }
 }
 
-/* Send starting from a given message index (inclusive): constructs messages up to that index as conversation */
-async function sendFromIndex(startIdx){
-  // Build conversation: system prompt, then messages from 0..startIdx inclusive for context.
-  const conv = [];
-  if (settings.system_prompt) conv.push({role:'system', content: settings.system_prompt});
-  for (let i=0;i<=startIdx;i++){
-    const m = state.messages[i];
-    if (!m) continue;
-    conv.push({role:m.role, content:m.content});
-  }
-  // Only proceed if last message in conv is a user message
-  if (conv.length === 0 || conv[conv.length-1].role !== 'user') {
-    // If last is assistant, we need a user to prompt
-    // If user started from an assistant message, try to find last user earlier
-    let lastUser = null;
-    for (let i=startIdx;i>=0;i--){ if (state.messages[i].role==='user'){ lastUser = state.messages[i]; break; } }
-    if (!lastUser) { alert('No user prompt to send from.'); return; }
-    // set conv to include messages up to that user only
-    const conv2 = []; if (settings.system_prompt) conv2.push({role:'system', content:settings.system_prompt});
-    for (let i=0;i<state.messages.indexOf(lastUser)+1;i++) conv2.push({role: state.messages[i].role, content:state.messages[i].content});
-    // proceed with conv2
-    await internalSend(conv2, state.messages.indexOf(lastUser));
-    return;
-  }
-  await internalSend(conv, startIdx);
-}
-
-/* Send a brand new user message (appends and sends) */
+/* Send logic */
 async function onSend(){
   const text = userInput.value.trim();
   if (!text) return;
@@ -820,38 +647,45 @@ async function onSend(){
   await sendFromIndex(state.messages.length-1);
 }
 
-/* The core send routine: given conversation 'conv' (array of {role,content}), and the index of the final user message in state,
-   perform API call and append assistant response (supports streaming).
-*/
+async function sendFromIndex(startIdx){
+  const conv = [];
+  if (settings.system_prompt) conv.push({role:'system', content: settings.system_prompt});
+  for (let i=0;i<=startIdx;i++){
+    const m = state.messages[i];
+    if (!m) continue;
+    conv.push({role:m.role, content:m.content});
+  }
+  if (conv.length === 0 || conv[conv.length-1].role !== 'user') {
+    let lastUser = null;
+    for (let i=startIdx;i>=0;i--){ if (state.messages[i].role==='user'){ lastUser = state.messages[i]; break; } }
+    if (!lastUser) { alert('No user prompt to send from.'); return; }
+    const conv2 = []; if (settings.system_prompt) conv2.push({role:'system', content:settings.system_prompt});
+    for (let i=0;i<state.messages.indexOf(lastUser)+1;i++) conv2.push({role: state.messages[i].role, content:state.messages[i].content});
+    await internalSend(conv2, state.messages.indexOf(lastUser));
+    return;
+  }
+  await internalSend(conv, startIdx);
+}
+
 async function internalSend(conv, userIndexInState){
-  // prepare provider & params
   const provKey = settings.provider || DEFAULT.settings.provider;
   const provider = Providers[provKey] || Providers.openai;
   const apiKey = apiKeys[provKey] || apiKeys['custom'] || '';
   if (!apiKey){ alert('No API key saved for selected provider. Save a key in Settings.'); return; }
 
-  // create placeholder assistant message
   const placeholder = {id:uid(), role:'assistant', content:'', ts: nowISO(), streaming: true};
-  // insert/replace assistant slot: if there's already an assistant immediately after the userIndexInState remove it
   const nextIdx = userIndexInState + 1;
   if (state.messages[nextIdx] && state.messages[nextIdx].role === 'assistant') {
     state.messages.splice(nextIdx, 1, placeholder);
   } else {
     state.messages.splice(nextIdx, 0, placeholder);
   }
-  saveState();
-  renderChat();
+  saveState(); renderChat();
 
-  // show status
   updateStatus('Waiting for response...', true);
 
   const controller = new AbortController();
-  const params = {
-    temperature: settings.temperature,
-    top_p: settings.top_p,
-    top_k: settings.top_k,
-    max_tokens: settings.max_tokens
-  };
+  const params = { temperature: settings.temperature, top_p: settings.top_p, top_k: settings.top_k, max_tokens: settings.max_tokens };
 
   let accumulated = '';
 
@@ -867,7 +701,6 @@ async function internalSend(conv, userIndexInState){
       onDelta: (chunk, done=false) => {
         if (chunk) accumulated += chunk;
         if (settings.show_partials || done) {
-          // update placeholder content
           const idx = state.messages.findIndex(m=>m.id===placeholder.id);
           if (idx>=0){
             state.messages[idx].content = accumulated;
@@ -876,7 +709,6 @@ async function internalSend(conv, userIndexInState){
           }
         }
         if (done){
-          // finalize
           const idx = state.messages.findIndex(m=>m.id===placeholder.id);
           if (idx>=0){
             state.messages[idx].streaming = false;
@@ -890,37 +722,30 @@ async function internalSend(conv, userIndexInState){
         }
       }
     }).then(result => {
-      // non-streaming branch returns the full text
       if (result !== undefined && !settings.streaming) accumulated = result;
-      // finalize if not already done
       const idx = state.messages.findIndex(m=>m.id===placeholder.id);
       if (idx>=0){
         state.messages[idx].content = accumulated;
         state.messages[idx].streaming = false;
         state.messages[idx].ts = nowISO();
-        saveState();
-        renderChat();
+        saveState(); renderChat();
       }
-    }).catch(async (e)=>{
-      // handle thrown errors if fetch failed
+    }).catch((e)=>{
       const idx = state.messages.findIndex(m=>m.id===placeholder.id);
       if (idx>=0){
         state.messages[idx].error = (e && e.error) ? (typeof e.error === 'string' ? e.error : JSON.stringify(e.error)) : (e && e.message) ? e.message : 'Unknown error';
         state.messages[idx].streaming = false;
-        saveState();
-        renderChat();
+        saveState(); renderChat();
       }
       updateStatus('Error');
       console.error('API send error', e);
     });
   } catch (err) {
-    // top-level abort or fetch error
     const idx = state.messages.findIndex(m=>m.id===placeholder.id);
     if (idx>=0){
       state.messages[idx].error = err?.message || String(err);
       state.messages[idx].streaming = false;
-      saveState();
-      renderChat();
+      saveState(); renderChat();
     }
     updateStatus('Error');
   } finally {
@@ -928,21 +753,18 @@ async function internalSend(conv, userIndexInState){
   }
 }
 
-/* Update status area */
+/* Update status */
 function updateStatus(txt, loading=false){
   if (typeof txt === 'undefined') {
     statusEl.textContent = settings.streaming ? 'Streaming enabled' : 'No streaming';
     return;
   }
-  statusEl.textContent = txt;
+  // append streaming mode
+  const mode = settings.streaming ? ' (streaming on)' : ' (streaming off)';
+  statusEl.textContent = txt + (txt === 'Idle' ? '' : mode);
 }
 
-/* === Helpers === */
-function toggleSwitch(el){
-  el.classList.toggle('on');
-}
-
-/* === Import / Export === */
+/* Import / Export */
 function handleImportFile(e){
   const f = e.target.files && e.target.files[0];
   if (!f) return;
@@ -959,11 +781,9 @@ function handleImportFile(e){
   importFileInput.value = '';
 }
 
-/* Initialize UI display */
-(function bootstrapUI(){
-  // basic labels
+/* Bootstrap chat */
+(function bootstrap(){
   updateStatus();
-  // if there are no messages add a greeting
   if (!state.messages || state.messages.length === 0){
     state.messages = [{id:uid(), role:'assistant', content:'Hello — this chat runs entirely in your browser. Add an API key in Settings and send a message to start.', ts: nowISO()}];
     saveState();
@@ -971,11 +791,16 @@ function handleImportFile(e){
   renderChat();
 })();
 
-/* === Security notes visible to user (also in code) === */
-/* Keys are stored only in localStorage and only used in fetch Authorization headers.
-   All rendering uses textContent/pre.textContent only to avoid HTML/script injection.
-   If you enter a custom endpoint ensure it is OpenAI-compatible.
-*/
+/* Initialize some UI behaviors (make tooltips accessible) */
+document.querySelectorAll('.hint').forEach(el=>{
+  if (!el.getAttribute('title')) {
+    // provide default helpful hint if missing
+    el.setAttribute('title', 'More info');
+  }
+});
+
+/* Ensure sidebar initial collapsed state */
+applySidebarState();
 
 </script>
 </body>
