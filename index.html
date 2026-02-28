@@ -408,7 +408,6 @@ function init(){
   bindEvents();
   bootstrapChat();
 }
-init();
 
 /* Bind events */
 function bindEvents(){
@@ -782,14 +781,14 @@ function handleImportFile(e){
 }
 
 /* Bootstrap chat */
-(function bootstrap(){
+function bootstrapChat(){
   updateStatus();
   if (!state.messages || state.messages.length === 0){
     state.messages = [{id:uid(), role:'assistant', content:'Hello — this chat runs entirely in your browser. Add an API key in Settings and send a message to start.', ts: nowISO()}];
     saveState();
   }
   renderChat();
-})();
+}
 
 /* Initialize some UI behaviors (make tooltips accessible) */
 document.querySelectorAll('.hint').forEach(el=>{
@@ -799,8 +798,8 @@ document.querySelectorAll('.hint').forEach(el=>{
   }
 });
 
-/* Ensure sidebar initial collapsed state */
-applySidebarState();
+/* Start app after all constants/functions are initialized */
+init();
 
 </script>
 </body>
