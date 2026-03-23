@@ -18,7 +18,7 @@
   *{box-sizing:border-box}
   html,body{height:100%; margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
   body{
-    background: linear-gradient(180deg,var(--bg), rgba(0,0,0,0));
+    background: var(--bg);
     color:var(--text); padding:12px;
     transition: background .18s, color .18s;
   }
@@ -33,7 +33,8 @@
 
   /* Main panel */
   .panel{
-    background:linear-gradient(180deg,var(--panel),var(--glass));
+    background:var(--panel);
+    border:1px solid rgba(148,163,184,0.18);
     border-radius: var(--card-radius); padding:14px; min-height:0;
     box-shadow: 0 6px 24px rgba(2,6,23,0.12);
     display:flex; flex-direction:column; height:100%;
@@ -47,24 +48,24 @@
   .chat{flex:1; overflow:auto; padding:8px; display:flex; flex-direction:column; gap:10px; scroll-behavior:smooth}
   .msg{max-width:82%; padding:12px; border-radius:12px; position:relative; white-space:pre-wrap; word-break:break-word;}
   .msg .meta{font-size:12px; color:var(--muted); margin-bottom:6px}
-  .msg.user{align-self:flex-end; background:linear-gradient(180deg,var(--user-bg), rgba(0,0,0,0.02)); color:var(--text)}
-  .msg.assistant{align-self:flex-start; background:linear-gradient(180deg,var(--assistant-bg), rgba(0,0,0,0.02)); color:var(--text)}
+  .msg.user{align-self:flex-end; background:var(--user-bg); color:var(--text); border:1px solid rgba(148,163,184,0.16)}
+  .msg.assistant{align-self:flex-start; background:var(--assistant-bg); color:var(--text); border:1px solid rgba(148,163,184,0.16)}
   .msg .actions{position:absolute; top:6px; right:8px; display:flex; gap:6px}
   .btn{background:transparent;border:none;padding:6px 8px;border-radius:8px;cursor:pointer;color:var(--muted)}
-  .btn:hover{color:var(--text); background:rgba(0,0,0,0.04)}
+  .btn:hover{color:var(--text); background:rgba(148,163,184,0.12)}
   .input-row{display:flex; gap:8px; margin-top:12px; align-items:center}
-  .input-row textarea{flex:1; min-height:56px; max-height:260px; padding:12px; border-radius:10px; border:1px solid rgba(0,0,0,0.06); resize:vertical; background:transparent; color:var(--text)}
+  .input-row textarea{flex:1; min-height:56px; max-height:260px; padding:12px; border-radius:10px; border:1px solid rgba(148,163,184,0.2); resize:vertical; background:var(--panel); color:var(--text)}
   .send{background:var(--accent); color:white; border:none; padding:10px 14px; border-radius:10px; cursor:pointer}
   .muted{color:var(--muted); font-size:13px}
 
   /* Sidebar/settings */
   .sidebar{height:100%; overflow:auto; transition: width .18s; display:flex; flex-direction:column; gap:12px}
   .app.collapsed .sidebar{ width:var(--sidebar-collapsed-w); min-width:var(--sidebar-collapsed-w); }
-  .card{background:linear-gradient(180deg,var(--panel),var(--glass)); padding:12px; border-radius:12px; box-shadow:0 6px 18px rgba(2,6,23,0.08)}
+  .card{background:var(--panel); border:1px solid rgba(148,163,184,0.18); padding:12px; border-radius:12px; box-shadow:0 6px 18px rgba(2,6,23,0.08)}
   .setting-group{margin-bottom:12px}
   label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px}
   input[type=text], input[type=url], input[type=number], select, textarea, input[type=password]{
-    width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(0,0,0,0.06); background:transparent; color:var(--text)
+    width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(148,163,184,0.2); background:var(--panel); color:var(--text)
   }
   .small{font-size:13px; color:var(--muted)}
   .row{display:flex; gap:8px}
@@ -72,7 +73,7 @@
 
   /* Toggles & sliders */
   .toggle{display:inline-flex; align-items:center; gap:8px; cursor:pointer; user-select:none}
-  .switch{width:44px; height:26px; background:rgba(0,0,0,0.08); border-radius:999px; position:relative; display:inline-block}
+  .switch{width:44px; height:26px; background:rgba(148,163,184,0.22); border-radius:999px; position:relative; display:inline-block}
   .switch .knob{width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:3px;left:3px;transition:all .18s}
   .switch.on{background:var(--accent)}
   .switch.on .knob{left:21px}
@@ -93,7 +94,7 @@
   .error{background:rgba(220,38,38,0.08); color:#fff;padding:8px;border-radius:8px;font-size:13px}
   .ok{background:rgba(34,197,94,0.08); color:#fff;padding:8px;border-radius:8px;font-size:13px}
   .collapse{cursor:pointer;color:var(--muted); font-size:13px}
-  .small-btn{background:transparent;border:1px solid rgba(0,0,0,0.06); padding:6px 8px;border-radius:8px; cursor:pointer}
+  .small-btn{background:transparent;border:1px solid rgba(148,163,184,0.2); color:var(--text); padding:6px 8px;border-radius:8px; cursor:pointer}
   .note{font-size:12px;color:var(--muted);margin-top:6px}
 
   /* collapsed sidebar styles (icons only) */
@@ -102,7 +103,7 @@
   }
   .app.collapsed .sidebar .settings-main{display:none}
   .app.collapsed .sidebar .compact{display:flex}
-  .compact .icon-btn{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,0,0,0.06); cursor:pointer}
+  .compact .icon-btn{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(148,163,184,0.2); cursor:pointer}
   .compact .icon-btn svg{width:20px;height:20px; fill:var(--muted)}
   .app.collapsed .sidebar{padding-top:8px}
 
@@ -279,13 +280,13 @@
 
 <script>
 /* Local storage keys */
-const LS_KEYS = { state: 'aichat_state_v1', keys: 'aichat_api_keys_v1', settings: 'aichat_settings_v1' };
+const LS_KEYS = { state: 'aichat_state_v2', keys: 'aichat_api_keys_v2', settings: 'aichat_settings_v2' };
 
 /* Defaults */
 const DEFAULT = {
   settings: {
     theme: 'light', provider: 'openai', customEndpoint: '', model: 'gpt-4o-mini', customModel: '',
-    temperature: 0.7, top_p: 0.95, top_k: 0, max_tokens: 512, streaming: false, show_partials: true,
+    temperature: 0.7, top_p: 0.95, top_k: 0, max_tokens: 512, streaming: true, show_partials: true,
     system_prompt: 'You are a concise, helpful assistant.', collapsedSidebar: false
   },
   messages: []
@@ -297,74 +298,209 @@ const escapeHtml = s => s.replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'
 const uid = ()=> Math.random().toString(36).slice(2,9);
 const nowISO = ()=> new Date().toISOString();
 
-/* Provider layer (same shapes, keep simple) */
-const Providers = {
-  openai: {/* ... same as before, but simplified for brevity below (kept full in final) */},
-  openrouter: {},
-  mistral: {},
-  aistudio: {}
-};
-/* We'll reuse the previous provider implementations (OpenAI-compatible streaming/parsing). */
-/* For readability and to avoid missing functionality in this single-file, reinsert the same provider implementations exactly as before: */
-(function defineProviders(){
-  Providers.openai = {
+/* Provider layer */
+const ProviderMeta = {
+  openai: {
+    label: 'OpenAI',
+    defaultModel: 'gpt-4o-mini',
+    authMode: 'bearer',
     defaultEndpoint: 'https://api.openai.com/v1/chat/completions',
-    sendChat: async (opts) => {
-      const url = opts.endpoint || Providers.openai.defaultEndpoint;
-      const headers = {'Content-Type':'application/json','Authorization': 'Bearer ' + opts.apiKey};
-      const body = {model: opts.model, messages: opts.messages, max_tokens: opts.params.max_tokens, temperature: opts.params.temperature, top_p: opts.params.top_p, n:1};
-      if (opts.params.top_k) body['top_k'] = opts.params.top_k;
-      if (opts.streaming) body.stream = true;
-      const res = await fetch(url, {method:'POST', headers, body: JSON.stringify(body), signal: opts.signal});
-      if (!res.ok) {
-        const txt = await res.text().catch(()=>null);
-        throw {status:res.status, error: txt || res.statusText};
-      }
-      if (!opts.streaming) {
-        const j = await res.json();
-        const content = j?.choices?.[0]?.message?.content ?? j?.choices?.[0]?.text ?? JSON.stringify(j);
-        return content;
-      } else {
-        const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
-        while(true){
-          const {done,value} = await reader.read();
-          if (done) break;
-          buf += dec.decode(value, {stream:true});
-          let lines = buf.split(/\r?\n/); buf = lines.pop();
-          for (let l of lines){
-            l = l.trim(); if (!l) continue;
-            if (l === 'data: [DONE]') { opts.onDelta('', true); return; }
-            if (l.startsWith('data:')) {
-              const payload = l.replace(/^data:\s*/, '');
-              try {
-                const parsed = JSON.parse(payload);
-                const delta = parsed?.choices?.[0]?.delta?.content ?? parsed?.choices?.[0]?.text ?? '';
-                if (delta) opts.onDelta(delta, false);
-              } catch(e) {}
-            }
-          }
+    supportsStreaming: true,
+    buildRequest: ({messages, model, params, streaming}) => ({
+      url: ProviderMeta.openai.defaultEndpoint,
+      init: {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: params.temperature,
+          top_p: params.top_p,
+          max_tokens: params.max_tokens,
+          ...(params.top_k ? {top_k: params.top_k} : {}),
+          ...(streaming ? {stream: true} : {})
+        })
+      },
+      parser: 'openai'
+    })
+  },
+  openrouter: {
+    label: 'OpenRouter',
+    defaultModel: 'openai/gpt-4o-mini',
+    authMode: 'bearer',
+    defaultEndpoint: 'https://openrouter.ai/api/v1/chat/completions',
+    supportsStreaming: true,
+    buildRequest: ({messages, model, params, streaming}) => ({
+      url: ProviderMeta.openrouter.defaultEndpoint,
+      init: {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: params.temperature,
+          top_p: params.top_p,
+          max_tokens: params.max_tokens,
+          ...(streaming ? {stream: true} : {})
+        })
+      },
+      parser: 'openai'
+    })
+  },
+  mistral: {
+    label: 'Mistral',
+    defaultModel: 'mistral-small-latest',
+    authMode: 'bearer',
+    defaultEndpoint: 'https://api.mistral.ai/v1/chat/completions',
+    supportsStreaming: true,
+    buildRequest: ({messages, model, params, streaming}) => ({
+      url: ProviderMeta.mistral.defaultEndpoint,
+      init: {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: params.temperature,
+          top_p: params.top_p,
+          max_tokens: params.max_tokens,
+          ...(streaming ? {stream: true} : {})
+        })
+      },
+      parser: 'openai'
+    })
+  },
+  aistudio: {
+    label: 'Google AI Studio',
+    defaultModel: 'gemini-2.0-flash',
+    authMode: 'query',
+    supportsStreaming: true,
+    buildRequest: ({messages, model, params, streaming, apiKey}) => {
+      const base = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + (streaming ? ':streamGenerateContent' : ':generateContent');
+      const url = base + (streaming ? '?alt=sse&' : '?') + 'key=' + encodeURIComponent(apiKey);
+      const systemText = messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n').trim();
+      const body = {
+        contents: messages.filter(m => m.role !== 'system').map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{text: m.content}]
+        })),
+        generationConfig: {
+          temperature: params.temperature,
+          topP: params.top_p,
+          topK: params.top_k || undefined,
+          maxOutputTokens: params.max_tokens
         }
-        opts.onDelta('', true);
-        return;
+      };
+      if (systemText) body.systemInstruction = {parts: [{text: systemText}]};
+      return {
+        url,
+        init: {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        },
+        parser: 'google'
+      };
+    }
+  },
+  custom: {
+    label: 'Custom',
+    defaultModel: '',
+    authMode: 'bearer',
+    supportsStreaming: true,
+    buildRequest: ({messages, model, params, streaming, endpoint}) => ({
+      url: endpoint,
+      init: {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: params.temperature,
+          top_p: params.top_p,
+          max_tokens: params.max_tokens,
+          ...(params.top_k ? {top_k: params.top_k} : {}),
+          ...(streaming ? {stream: true} : {})
+        })
+      },
+      parser: 'openai'
+    })
+  }
+};
+
+const Providers = {
+  async sendChat(opts) {
+    const providerConfig = ProviderMeta[opts.provider] || ProviderMeta.openai;
+    const endpoint = opts.provider === 'custom' ? (opts.endpoint || '').trim() : providerConfig.defaultEndpoint;
+    if (opts.provider === 'custom' && !endpoint) {
+      throw new Error('Add a custom endpoint before sending a request.');
+    }
+
+    const request = providerConfig.buildRequest({...opts, endpoint, apiKey: opts.apiKey});
+    const headers = request.init.headers || {};
+    if (providerConfig.authMode === 'bearer') {
+      headers['Authorization'] = 'Bearer ' + opts.apiKey;
+    }
+    request.init.headers = headers;
+
+    const res = await fetch(request.url, {...request.init, signal: opts.signal});
+    if (!res.ok) {
+      const txt = await res.text().catch(()=> '');
+      throw {status: res.status, error: txt || res.statusText};
+    }
+
+    if (!opts.streaming) {
+      const json = await res.json();
+      return request.parser === 'google' ? extractGoogleText(json) : extractOpenAIText(json);
+    }
+
+    await streamSSE(res, request.parser, opts.onDelta);
+  }
+};
+
+function extractOpenAIText(payload){
+  return payload?.choices?.[0]?.message?.content ?? payload?.choices?.[0]?.text ?? '';
+}
+
+function extractGoogleText(payload){
+  const parts = payload?.candidates?.[0]?.content?.parts || [];
+  return parts.map(part => part?.text || '').join('');
+}
+
+async function streamSSE(res, parser, onDelta){
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = '';
+  while (true) {
+    const {done, value} = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, {stream: true});
+    const chunks = buf.split(/\r?\n\r?\n/);
+    buf = chunks.pop();
+    for (const chunk of chunks) {
+      const lines = chunk.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        const payload = line.replace(/^data:\s*/, '');
+        if (payload === '[DONE]') {
+          onDelta('', true);
+          return;
+        }
+        try {
+          const parsed = JSON.parse(payload);
+          const delta = parser === 'google'
+            ? extractGoogleText(parsed)
+            : (parsed?.choices?.[0]?.delta?.content ?? parsed?.choices?.[0]?.text ?? '');
+          if (delta) onDelta(delta, false);
+        } catch (err) {
+          console.warn('Skipping non-JSON stream chunk', err);
+        }
       }
     }
-  };
+  }
+  onDelta('', true);
+}
 
-  Providers.openrouter = {
-    defaultEndpoint: 'https://api.openrouter.ai/v1/chat/completions',
-    sendChat: Providers.openai.sendChat // reuse same parsing semantics (OpenRouter compatible)
-  };
-
-  Providers.mistral = {
-    defaultEndpoint: 'https://api.mistral.ai/v1/generate',
-    sendChat: Providers.openai.sendChat // allow custom endpoint; attempt OpenAI-compatible shape
-  };
-
-  Providers.aistudio = {
-    defaultEndpoint: 'https://api.aistudio.example/v1/chat/completions',
-    sendChat: Providers.openai.sendChat
-  };
-})();
 
 /* State */
 let state = loadState();
@@ -425,7 +561,7 @@ function bindEvents(){
   collapseSidebarBtn.addEventListener('click', ()=>{ settings.collapsedSidebar = true; applySidebarState(); saveSettings(); });
   expandSidebar && expandSidebar.addEventListener && expandSidebar.addEventListener('click', ()=>{ settings.collapsedSidebar = false; applySidebarState(); saveSettings(); });
 
-  providerSelect.addEventListener('change', ()=>{ settings.provider = providerSelect.value; endpointGroup.style.display = (settings.provider==='custom')?'block':'none'; renderModelOptions(); saveSettings(); });
+  providerSelect.addEventListener('change', ()=>{ settings.provider = providerSelect.value; endpointGroup.style.display = (settings.provider==='custom')?'block':'none'; if (!settings.customModel) settings.model = ProviderMeta[settings.provider]?.defaultModel || settings.model; syncProviderSelections(); renderModelOptions(); updateStreamingAvailability(); saveSettings(); });
   customEndpoint.addEventListener('input', ()=>{ settings.customEndpoint = customEndpoint.value; saveSettings(); });
   modelSelect.addEventListener('change', ()=>{ settings.model = modelSelect.value; saveSettings(); });
   customModel.addEventListener('input', ()=>{ settings.customModel = customModel.value; saveSettings(); });
@@ -445,8 +581,8 @@ function bindEvents(){
   // API keys
   saveKeyBtn.addEventListener('click', saveApiKey);
   showKeysBtn.addEventListener('click', showStoredKeys);
-  clearKeysBtn.addEventListener('click', ()=>{ if(confirm('Clear all stored API keys?')){ apiKeys = {}; saveKeys(); showStoredKeys(); } });
-  keyProviderSelect.addEventListener('change', ()=>{ apiKeyInput.placeholder = 'Key for ' + keyProviderSelect.value; });
+  clearKeysBtn.addEventListener('click', ()=>{ if(confirm('Clear all stored API keys?')){ apiKeys = {}; saveKeys(); syncKeyInput(); showStoredKeys(); } });
+  keyProviderSelect.addEventListener('change', ()=>{ syncKeyInput(); });
 
   exportChatBtn.addEventListener('click', ()=>{ const blob = new Blob([JSON.stringify({settings, messages: state.messages},null,2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='ai-chat-export.json'; a.click(); URL.revokeObjectURL(url); });
   importChatBtn.addEventListener('click', ()=>importFileInput.click());
@@ -461,7 +597,7 @@ function setSwitchState(el, on, labelEl, onText='On', offText='Off', settingKey)
     settings[settingKey] = !!on;
     saveSettings();
   }
-  updateStatus();
+  updateStatus('Idle');
 }
 
 /* Apply settings to UI */
@@ -469,6 +605,7 @@ function applySettingsToUI(){
   providerSelect.value = settings.provider || DEFAULT.settings.provider;
   endpointGroup.style.display = (settings.provider==='custom')?'block':'none';
   customEndpoint.value = settings.customEndpoint || '';
+  customModel.value = settings.customModel || '';
   systemPrompt.value = settings.system_prompt || DEFAULT.settings.system_prompt;
   temperature.value = settings.temperature ?? DEFAULT.settings.temperature;
   top_p.value = settings.top_p ?? DEFAULT.settings.top_p;
@@ -483,6 +620,9 @@ function applySettingsToUI(){
 
   settings.collapsedSidebar = !!settings.collapsedSidebar;
   applySidebarState();
+  syncProviderSelections();
+  syncKeyInput();
+  updateStreamingAvailability();
 }
 
 /* Theme functions */
@@ -504,11 +644,11 @@ function applySidebarState(){
 
 /* Model options */
 const MODEL_PRESETS = {
-  openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4', 'gpt-3.5-turbo'],
-  openrouter: ['chatopenai/gpt-4o-mini','chatopenai/gpt-4o','gpt-3.5-turbo'],
-  mistral: ['mistral-medium', 'mistral-large'],
-  aistudio: ['aistudio/fast', 'aistudio/standard'],
-  custom: ['(enter custom model or select below)']
+  openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4.1'],
+  openrouter: ['openai/gpt-4o-mini','openai/gpt-4o','anthropic/claude-3.5-sonnet'],
+  mistral: ['mistral-small-latest', 'mistral-medium-latest', 'mistral-large-latest'],
+  aistudio: ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-pro'],
+  custom: ['custom-model']
 };
 function renderModelOptions(){
   const prov = settings.provider || providerSelect.value || 'openai';
@@ -516,7 +656,36 @@ function renderModelOptions(){
   (MODEL_PRESETS[prov] || MODEL_PRESETS['custom']).forEach(m=>{
     const opt = document.createElement('option'); opt.value = m; opt.textContent = m; modelSelect.appendChild(opt);
   });
-  if (settings.model) modelSelect.value = settings.model;
+  if ((MODEL_PRESETS[prov] || []).includes(settings.model)) {
+    modelSelect.value = settings.model;
+  } else if (modelSelect.options.length) {
+    modelSelect.value = modelSelect.options[0].value;
+    if (!settings.customModel) settings.customModel = settings.model || '';
+    settings.model = modelSelect.value;
+  }
+}
+
+function syncProviderSelections(){
+  keyProviderSelect.value = settings.provider;
+}
+
+function syncKeyInput(){
+  const provider = keyProviderSelect.value;
+  const hasKey = Boolean(apiKeys[provider]);
+  apiKeyInput.placeholder = hasKey ? `Saved key for ${provider} — paste to replace` : `Paste ${provider} API key`;
+}
+
+function updateStreamingAvailability(){
+  const provider = settings.provider || 'openai';
+  const supported = ProviderMeta[provider]?.supportsStreaming !== false;
+  streamToggle.style.opacity = supported ? '1' : '0.6';
+  streamToggle.style.pointerEvents = supported ? 'auto' : 'none';
+  if (!supported && settings.streaming) {
+    settings.streaming = false;
+    saveSettings();
+  }
+  setSwitchState(streamSwitch, !!settings.streaming, streamLabel, 'On', 'Off');
+  updateStatus('Idle');
 }
 
 /* API keys functions */
@@ -527,11 +696,12 @@ function saveApiKey(){
   apiKeys[p] = k;
   saveKeys();
   apiKeyInput.value = '';
+  syncKeyInput();
   alert('Saved key locally for ' + p);
 }
 function showStoredKeys(){
   keyListEl.style.display = Object.keys(apiKeys).length ? 'block' : 'none';
-  keyListEl.textContent = Object.keys(apiKeys).length ? Object.keys(apiKeys).map(k => `${k}: ${apiKeys[k].slice(0,6)}…`).join('\n') : 'No keys saved';
+  keyListEl.textContent = Object.keys(apiKeys).length ? Object.keys(apiKeys).map(k => `${k}: ${apiKeys[k].slice(0,6)}… (${k === settings.provider ? 'active provider' : 'saved'})`).join('\n') : 'No keys saved';
 }
 
 /* Chat rendering */
@@ -668,8 +838,7 @@ async function sendFromIndex(startIdx){
 
 async function internalSend(conv, userIndexInState){
   const provKey = settings.provider || DEFAULT.settings.provider;
-  const provider = Providers[provKey] || Providers.openai;
-  const apiKey = apiKeys[provKey] || apiKeys['custom'] || '';
+  const apiKey = apiKeys[provKey] || '';
   if (!apiKey){ alert('No API key saved for selected provider. Save a key in Settings.'); return; }
 
   const placeholder = {id:uid(), role:'assistant', content:'', ts: nowISO(), streaming: true};
@@ -689,9 +858,11 @@ async function internalSend(conv, userIndexInState){
   let accumulated = '';
 
   try {
-    await provider.sendChat({
+    const model = (settings.customModel || settings.model || ProviderMeta[provKey]?.defaultModel || '').trim();
+    await Providers.sendChat({
+      provider: provKey,
       messages: conv,
-      model: settings.customModel || settings.model,
+      model,
       params,
       streaming: settings.streaming,
       endpoint: settings.customEndpoint || undefined,
@@ -759,8 +930,9 @@ function updateStatus(txt, loading=false){
     return;
   }
   // append streaming mode
+  const provider = settings.provider || 'openai';
   const mode = settings.streaming ? ' (streaming on)' : ' (streaming off)';
-  statusEl.textContent = txt + (txt === 'Idle' ? '' : mode);
+  statusEl.textContent = (txt === 'Idle' ? `Ready · ${ProviderMeta[provider]?.label || provider}` : txt) + (txt === 'Idle' ? mode : mode);
 }
 
 /* Import / Export */
@@ -773,7 +945,7 @@ function handleImportFile(e){
     if (j.messages) state.messages = j.messages;
     if (j.settings) Object.assign(settings, j.settings);
     saveState(); saveSettings();
-    applySettingsToUI(); renderChat();
+    applySettingsToUI(); renderModelOptions(); renderChat();
     alert('Import applied.');
   }catch(err){ alert('Invalid JSON'); } };
   reader.readAsText(f);
@@ -782,7 +954,7 @@ function handleImportFile(e){
 
 /* Bootstrap chat */
 function bootstrapChat(){
-  updateStatus();
+  updateStatus('Idle');
   if (!state.messages || state.messages.length === 0){
     state.messages = [{id:uid(), role:'assistant', content:'Hello — this chat runs entirely in your browser. Add an API key in Settings and send a message to start.', ts: nowISO()}];
     saveState();
