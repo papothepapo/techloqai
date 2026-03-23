@@ -46,11 +46,11 @@
   /* Chat area full height */
   .chat-wrap{flex:1; display:flex; flex-direction:column; min-height:0}
   .chat{flex:1; overflow:auto; padding:8px; display:flex; flex-direction:column; gap:10px; scroll-behavior:smooth}
-  .msg{max-width:82%; padding:12px; border-radius:12px; position:relative; white-space:pre-wrap; word-break:break-word;}
+  .msg{max-width:82%; padding:12px; border-radius:12px; position:relative; white-space:pre-wrap; word-break:break-word; display:flex; flex-direction:column; gap:10px;}
   .msg .meta{font-size:12px; color:var(--muted); margin-bottom:6px}
   .msg.user{align-self:flex-end; background:var(--user-bg); color:var(--text); border:1px solid rgba(148,163,184,0.16)}
   .msg.assistant{align-self:flex-start; background:var(--assistant-bg); color:var(--text); border:1px solid rgba(148,163,184,0.16)}
-  .msg .actions{position:absolute; top:6px; right:8px; display:flex; gap:6px}
+  .msg .actions{display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; margin-top:2px}
   .btn{background:transparent;border:none;padding:6px 8px;border-radius:8px;cursor:pointer;color:var(--muted)}
   .btn:hover{color:var(--text); background:rgba(148,163,184,0.12)}
   .input-row{display:flex; gap:8px; margin-top:12px; align-items:center}
@@ -85,6 +85,11 @@
   /* message editor */
   .editor{margin-top:8px; display:flex; gap:8px}
   .editor textarea{flex:1; min-height:78px}
+  .message-main{display:flex; flex-direction:column; gap:8px}
+  .thinking{padding:10px 12px; border-radius:10px; border:1px dashed rgba(148,163,184,0.35); background:rgba(148,163,184,0.08)}
+  .thinking summary{cursor:pointer; color:var(--muted); font-size:13px; margin-bottom:8px}
+  .prompt-row{display:flex; gap:8px; align-items:center; margin-top:8px}
+  .prompt-row select{flex:1}
 
   /* minimal tooltips */
   .hint{border-bottom:1px dotted var(--muted); cursor:help; padding:0 6px; border-radius:4px; line-height:1}
@@ -128,7 +133,7 @@
           <div id="themeLabel" class="muted">Light</div>
         </div>
         <button class="small-btn" id="clearAll">Clear Chat</button>
-        <button class="small-btn" id="focusSettings">Settings</button>
+        <button class="small-btn" id="focusSettings">Toggle Settings</button>
       </div>
     </div>
 
@@ -196,7 +201,14 @@
         <div class="setting-group">
           <label>System prompt</label>
           <textarea id="systemPrompt" placeholder="You are a helpful assistant..."></textarea>
-          <div class="note">This prompt is prepended to every request. Persists across session.</div>
+          <div class="prompt-row">
+            <select id="savedPromptSelect">
+              <option value="">Saved prompts</option>
+            </select>
+            <button class="small-btn" id="savePromptBtn">Save Prompt</button>
+            <button class="small-btn" id="deletePromptBtn">Delete</button>
+          </div>
+          <div class="note">This prompt is prepended to every request. You can also save reusable system prompts locally.</div>
         </div>
 
         <div class="setting-group">
@@ -240,6 +252,17 @@
                 </div>
               </div>
             </div>
+
+            <div class="row">
+              <div style="flex:1">
+                <label>Show model thinking</label>
+                <div class="toggle" id="showThinkingToggle" title="Show reasoning or thinking text when the provider returns it">
+                  <div id="thinkingSwitch" class="switch" aria-hidden="true"><div class="knob"></div></div>
+                  <div id="thinkingLabel" class="muted">On</div>
+                </div>
+                <div class="note">Only appears for providers and models that actually return reasoning text.</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -280,13 +303,13 @@
 
 <script>
 /* Local storage keys */
-const LS_KEYS = { state: 'aichat_state_v2', keys: 'aichat_api_keys_v2', settings: 'aichat_settings_v2' };
+const LS_KEYS = { state: 'aichat_state_v2', keys: 'aichat_api_keys_v2', settings: 'aichat_settings_v2', prompts: 'aichat_saved_prompts_v1' };
 
 /* Defaults */
 const DEFAULT = {
   settings: {
     theme: 'light', provider: 'openai', customEndpoint: '', model: 'gpt-4o-mini', customModel: '',
-    temperature: 0.7, top_p: 0.95, top_k: 0, max_tokens: 512, streaming: true, show_partials: true,
+    temperature: 0.7, top_p: 0.95, top_k: 0, max_tokens: 512, streaming: true, show_partials: true, show_thinking: true,
     system_prompt: 'You are a concise, helpful assistant.', collapsedSidebar: false
   },
   messages: []
@@ -467,6 +490,28 @@ function extractGoogleText(payload){
   return parts.map(part => part?.text || '').join('');
 }
 
+function extractReasoningDelta(payload, parser){
+  if (parser === 'google') {
+    const parts = payload?.candidates?.[0]?.content?.parts || [];
+    return parts
+      .filter(part => part?.thought || part?.thoughtSignature)
+      .map(part => part?.text || '')
+      .join('');
+  }
+
+  const delta = payload?.choices?.[0]?.delta || {};
+  if (typeof delta.reasoning === 'string') return delta.reasoning;
+  if (typeof delta.reasoning_content === 'string') return delta.reasoning_content;
+  if (Array.isArray(delta.reasoning)) return delta.reasoning.map(item => item?.text || '').join('');
+  if (Array.isArray(delta.content)) {
+    return delta.content
+      .filter(item => item?.type === 'reasoning' || item?.type === 'thinking')
+      .map(item => item?.text || item?.content || '')
+      .join('');
+  }
+  return '';
+}
+
 async function streamSSE(res, parser, onDelta){
   const reader = res.body.getReader();
   const dec = new TextDecoder();
@@ -483,7 +528,7 @@ async function streamSSE(res, parser, onDelta){
         if (!line.startsWith('data:')) continue;
         const payload = line.replace(/^data:\s*/, '');
         if (payload === '[DONE]') {
-          onDelta('', true);
+          onDelta({content:'', reasoning:''}, true);
           return;
         }
         try {
@@ -491,14 +536,15 @@ async function streamSSE(res, parser, onDelta){
           const delta = parser === 'google'
             ? extractGoogleText(parsed)
             : (parsed?.choices?.[0]?.delta?.content ?? parsed?.choices?.[0]?.text ?? '');
-          if (delta) onDelta(delta, false);
+          const reasoning = extractReasoningDelta(parsed, parser);
+          if (delta || reasoning) onDelta({content: delta || '', reasoning: reasoning || ''}, false);
         } catch (err) {
           console.warn('Skipping non-JSON stream chunk', err);
         }
       }
     }
   }
-  onDelta('', true);
+  onDelta({content:'', reasoning:''}, true);
 }
 
 
@@ -506,6 +552,7 @@ async function streamSSE(res, parser, onDelta){
 let state = loadState();
 let apiKeys = loadKeys();
 let settings = loadSettings();
+let savedPrompts = loadPrompts();
 
 /* Load/Save */
 function loadState(){ try{const s=localStorage.getItem(LS_KEYS.state); return s?JSON.parse(s):{messages:DEFAULT.messages};}catch(e){return {messages:DEFAULT.messages}} }
@@ -514,6 +561,8 @@ function loadKeys(){ try{const s=localStorage.getItem(LS_KEYS.keys); return s?JS
 function saveKeys(){ localStorage.setItem(LS_KEYS.keys, JSON.stringify(apiKeys)); }
 function loadSettings(){ try{const s=localStorage.getItem(LS_KEYS.settings); return s?JSON.parse(s):DEFAULT.settings;}catch(e){return DEFAULT.settings} }
 function saveSettings(){ localStorage.setItem(LS_KEYS.settings, JSON.stringify(settings)); }
+function loadPrompts(){ try{const s=localStorage.getItem(LS_KEYS.prompts); return s?JSON.parse(s):[];}catch(e){return [];} }
+function savePrompts(){ localStorage.setItem(LS_KEYS.prompts, JSON.stringify(savedPrompts)); }
 
 /* UI refs */
 const appEl = $('#app');
@@ -525,9 +574,11 @@ const focusSettingsBtn = $('#focusSettings');
 const themeToggle = $('#themeToggle'), themeSwitch = $('#themeSwitch'), themeLabel = $('#themeLabel');
 const providerSelect = $('#providerSelect'), endpointGroup = $('#endpointGroup'), customEndpoint = $('#customEndpoint');
 const modelSelect = $('#modelSelect'), customModel = $('#customModel'), systemPrompt = $('#systemPrompt');
+const savedPromptSelect = $('#savedPromptSelect'), savePromptBtn = $('#savePromptBtn'), deletePromptBtn = $('#deletePromptBtn');
 const temperature = $('#temperature'), top_p = $('#top_p'), top_k = $('#top_k'), max_tokens = $('#max_tokens');
 const streamToggle = $('#streamToggle'), streamSwitch = $('#streamSwitch'), streamLabel = $('#streamLabel');
 const showPartialToggle = $('#showPartialToggle'), partialSwitch = $('#partialSwitch'), partialLabel = $('#partialLabel');
+const showThinkingToggle = $('#showThinkingToggle'), thinkingSwitch = $('#thinkingSwitch'), thinkingLabel = $('#thinkingLabel');
 const statusEl = $('#status');
 const saveKeyBtn = $('#saveKeyBtn'), apiKeyInput = $('#apiKeyInput'), keyProviderSelect = $('#keyProviderSelect');
 const showKeysBtn = $('#showKeysBtn'), clearKeysBtn = $('#clearKeysBtn'), keyListEl = $('#keyList');
@@ -551,7 +602,12 @@ function bindEvents(){
   userInput.addEventListener('keydown', (e)=>{ if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) onSend(); });
 
   clearAllBtn.addEventListener('click', ()=>{ if(confirm('Clear conversation?')){ state.messages=[]; saveState(); renderChat(); } });
-  focusSettingsBtn.addEventListener('click', ()=>{ document.getElementById('settingsCard').scrollIntoView({behavior:'smooth'}); });
+  focusSettingsBtn.addEventListener('click', ()=>{
+    settings.collapsedSidebar = !settings.collapsedSidebar;
+    applySidebarState();
+    saveSettings();
+    if (!settings.collapsedSidebar) document.getElementById('settingsCard').scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
 
   // theme toggles (header and compact)
   themeToggle.addEventListener('click', toggleTheme);
@@ -566,6 +622,9 @@ function bindEvents(){
   modelSelect.addEventListener('change', ()=>{ settings.model = modelSelect.value; saveSettings(); });
   customModel.addEventListener('input', ()=>{ settings.customModel = customModel.value; saveSettings(); });
   systemPrompt.addEventListener('input', ()=>{ settings.system_prompt = systemPrompt.value; saveSettings(); });
+  savePromptBtn.addEventListener('click', saveCurrentPrompt);
+  deletePromptBtn.addEventListener('click', deleteSelectedPrompt);
+  savedPromptSelect.addEventListener('change', applySavedPrompt);
 
   temperature.addEventListener('input', ()=>{ settings.temperature = Number(temperature.value); saveSettings(); });
   top_p.addEventListener('input', ()=>{ settings.top_p = Number(top_p.value); saveSettings(); });
@@ -577,6 +636,8 @@ function bindEvents(){
   streamSwitch.addEventListener('click', (e)=>{ e.stopPropagation(); setSwitchState(streamSwitch, !streamSwitch.classList.contains('on'), streamLabel, 'On', 'Off', 'streaming'); });
   showPartialToggle.addEventListener('click', ()=>{ setSwitchState(partialSwitch, !partialSwitch.classList.contains('on'), partialLabel, 'On', 'Off', 'show_partials'); });
   partialSwitch.addEventListener('click', (e)=>{ e.stopPropagation(); setSwitchState(partialSwitch, !partialSwitch.classList.contains('on'), partialLabel, 'On', 'Off', 'show_partials'); });
+  showThinkingToggle.addEventListener('click', ()=>{ setSwitchState(thinkingSwitch, !thinkingSwitch.classList.contains('on'), thinkingLabel, 'On', 'Off', 'show_thinking'); renderChat(); });
+  thinkingSwitch.addEventListener('click', (e)=>{ e.stopPropagation(); setSwitchState(thinkingSwitch, !thinkingSwitch.classList.contains('on'), thinkingLabel, 'On', 'Off', 'show_thinking'); renderChat(); });
 
   // API keys
   saveKeyBtn.addEventListener('click', saveApiKey);
@@ -614,6 +675,7 @@ function applySettingsToUI(){
 
   streamSwitch.classList.toggle('on', !!settings.streaming); streamLabel.textContent = settings.streaming ? 'On' : 'Off';
   partialSwitch.classList.toggle('on', !!settings.show_partials); partialLabel.textContent = settings.show_partials ? 'On' : 'Off';
+  thinkingSwitch.classList.toggle('on', !!settings.show_thinking); thinkingLabel.textContent = settings.show_thinking ? 'On' : 'Off';
 
   settings.theme = settings.theme || DEFAULT.settings.theme;
   applyThemeUI(settings.theme);
@@ -622,6 +684,7 @@ function applySettingsToUI(){
   applySidebarState();
   syncProviderSelections();
   syncKeyInput();
+  renderSavedPrompts();
   updateStreamingAvailability();
 }
 
@@ -704,6 +767,71 @@ function showStoredKeys(){
   keyListEl.textContent = Object.keys(apiKeys).length ? Object.keys(apiKeys).map(k => `${k}: ${apiKeys[k].slice(0,6)}… (${k === settings.provider ? 'active provider' : 'saved'})`).join('\n') : 'No keys saved';
 }
 
+function renderSavedPrompts(){
+  if (!savedPromptSelect) return;
+  const previous = savedPromptSelect.value;
+  savedPromptSelect.innerHTML = '<option value="">Saved prompts</option>';
+  savedPrompts.forEach(prompt => {
+    const opt = document.createElement('option');
+    opt.value = prompt.id;
+    opt.textContent = prompt.name;
+    savedPromptSelect.appendChild(opt);
+  });
+  if (savedPrompts.some(prompt => prompt.id === previous)) savedPromptSelect.value = previous;
+}
+
+function saveCurrentPrompt(){
+  const content = systemPrompt.value.trim();
+  if (!content) {
+    alert('Enter a system prompt first.');
+    return;
+  }
+
+  const suggestedName = savedPromptSelect.value
+    ? (savedPrompts.find(prompt => prompt.id === savedPromptSelect.value)?.name || '')
+    : '';
+  const name = window.prompt('Name this system prompt:', suggestedName);
+  if (!name || !name.trim()) return;
+
+  const normalized = name.trim().toLowerCase();
+  const existing = savedPrompts.find(prompt => prompt.name.toLowerCase() === normalized);
+  if (existing) {
+    existing.name = name.trim();
+    existing.content = content;
+    existing.updatedAt = nowISO();
+    savedPromptSelect.value = existing.id;
+  } else {
+    const prompt = {id: uid(), name: name.trim(), content, updatedAt: nowISO()};
+    savedPrompts.unshift(prompt);
+    savedPromptSelect.value = prompt.id;
+  }
+
+  savePrompts();
+  renderSavedPrompts();
+}
+
+function applySavedPrompt(){
+  const prompt = savedPrompts.find(item => item.id === savedPromptSelect.value);
+  if (!prompt) return;
+  systemPrompt.value = prompt.content;
+  settings.system_prompt = prompt.content;
+  saveSettings();
+}
+
+function deleteSelectedPrompt(){
+  if (!savedPromptSelect.value) {
+    alert('Choose a saved prompt to delete.');
+    return;
+  }
+  const prompt = savedPrompts.find(item => item.id === savedPromptSelect.value);
+  if (!prompt) return;
+  if (!window.confirm(`Delete saved prompt "${prompt.name}"?`)) return;
+  savedPrompts = savedPrompts.filter(item => item.id !== prompt.id);
+  savePrompts();
+  savedPromptSelect.value = '';
+  renderSavedPrompts();
+}
+
 /* Chat rendering */
 function renderChat(){
   chatEl.innerHTML = '';
@@ -714,17 +842,32 @@ function renderChat(){
     meta.textContent = `${m.role === 'user' ? 'You' : 'Assistant'} · ${new Date(m.ts||'').toLocaleString() || ''}`;
     div.appendChild(meta);
 
+    const body = document.createElement('div'); body.className='message-main';
     const act = document.createElement('div'); act.className='actions';
     const editBtn = document.createElement('button'); editBtn.className='btn'; editBtn.title='Edit message'; editBtn.innerText='Edit';
     editBtn.addEventListener('click', ()=>openEditor(m.id));
     const resendBtn = document.createElement('button'); resendBtn.className='btn'; resendBtn.title='Resend/Regenerate'; resendBtn.innerText = m.role==='user' ? 'Resend' : 'Regenerate';
     resendBtn.addEventListener('click', ()=>resendMessage(m.id));
     act.appendChild(editBtn); act.appendChild(resendBtn);
-    div.appendChild(act);
 
     const content = document.createElement('div'); content.className='content';
     renderMessageContent(m.content, content);
-    div.appendChild(content);
+    body.appendChild(content);
+
+    if (settings.show_thinking && m.thinking) {
+      const thinking = document.createElement('details');
+      thinking.className = 'thinking';
+      const summary = document.createElement('summary');
+      summary.textContent = 'Model thinking';
+      thinking.appendChild(summary);
+      const thinkingContent = document.createElement('div');
+      renderMessageContent(m.thinking, thinkingContent);
+      thinking.appendChild(thinkingContent);
+      body.appendChild(thinking);
+    }
+
+    body.appendChild(act);
+    div.appendChild(body);
 
     if (m.error) {
       const err = document.createElement('div'); err.className='error'; err.textContent = 'Error: ' + m.error;
@@ -856,6 +999,7 @@ async function internalSend(conv, userIndexInState){
   const params = { temperature: settings.temperature, top_p: settings.top_p, top_k: settings.top_k, max_tokens: settings.max_tokens };
 
   let accumulated = '';
+  let reasoningText = '';
 
   try {
     const model = (settings.customModel || settings.model || ProviderMeta[provKey]?.defaultModel || '').trim();
@@ -869,11 +1013,13 @@ async function internalSend(conv, userIndexInState){
       apiKey,
       signal: controller.signal,
       onDelta: (chunk, done=false) => {
-        if (chunk) accumulated += chunk;
-        if (settings.show_partials || done) {
+        if (chunk?.content) accumulated += chunk.content;
+        if (chunk?.reasoning) reasoningText += chunk.reasoning;
+        if (settings.show_partials || done || (settings.show_thinking && chunk?.reasoning)) {
           const idx = state.messages.findIndex(m=>m.id===placeholder.id);
           if (idx>=0){
             state.messages[idx].content = accumulated;
+            state.messages[idx].thinking = reasoningText;
             saveState();
             renderChat();
           }
@@ -883,6 +1029,7 @@ async function internalSend(conv, userIndexInState){
           if (idx>=0){
             state.messages[idx].streaming = false;
             state.messages[idx].ts = nowISO();
+            state.messages[idx].thinking = reasoningText;
             saveState();
             renderChat();
           }
@@ -896,6 +1043,7 @@ async function internalSend(conv, userIndexInState){
       const idx = state.messages.findIndex(m=>m.id===placeholder.id);
       if (idx>=0){
         state.messages[idx].content = accumulated;
+        state.messages[idx].thinking = reasoningText;
         state.messages[idx].streaming = false;
         state.messages[idx].ts = nowISO();
         saveState(); renderChat();
